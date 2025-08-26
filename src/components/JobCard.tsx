@@ -1,8 +1,9 @@
-import { UserIcon, CalendarIcon, MapPinIcon, CurrencyYenIcon, PencilIcon, TrashIcon, EyeSlashIcon, EyeIcon, BellIcon } from '@heroicons/react/24/outline';
+import { UserIcon, CalendarIcon, MapPinIcon, CurrencyYenIcon, PencilIcon, TrashIcon, EyeSlashIcon, EyeIcon, BellIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { Job } from '../types';
 import { StatusPill } from './StatusPill';
 import { fmtDate, fromNow } from '../utils/dates';
-import { updateJob, deleteJob } from '../lib/data';
+import { updateJob, deleteJob, createApplication } from '../lib/data';
+import { bus } from '../lib/bus';
 
 interface JobCardProps {
   job: Job;
@@ -35,13 +36,40 @@ export function JobCard({ job, onEdit, onDeleted, onUpdated }: JobCardProps) {
     if (updated && onUpdated) {
       onUpdated(updated);
     }
-    alert(`「${job.summary}」の求人情報を配信しました`);
+    
+    // Send detailed job info to LINE mock
+    bus.emit('JOB_PUBLISHED', {
+      id: job.id,
+      title: job.summary,
+      trade: job.trade,
+      location: `${job.sitePref}${job.siteCity}`,
+      salary: job.salaryBand + (job.salaryNote ? ` (${job.salaryNote})` : ''),
+      period: `${job.startDate} 〜 ${job.endDate}`
+    });
+    
+    alert(`「${job.summary}」の求人情報をLINEに配信しました`);
   };
 
   const handleEdit = () => {
     if (onEdit) {
       onEdit(job);
     }
+  };
+
+  const handleTestApplication = () => {
+    const testNames = ['田中太郎', '佐藤花子', '鈴木一郎', '山田美香', '高橋健太'];
+    const randomName = testNames[Math.floor(Math.random() * testNames.length)];
+    
+    createApplication({
+      jobId: job.id,
+      applicantName: randomName,
+      phone: '090-1234-5678',
+      lineId: `line_${randomName.slice(0, 2)}`,
+      note: 'テスト応募です',
+      status: 'APPLIED'
+    });
+    
+    alert(`${randomName}さんからの応募を作成しました`);
   };
 
   const getStatusPillProps = (status: Job['status']) => {
@@ -131,6 +159,14 @@ export function JobCard({ job, onEdit, onDeleted, onUpdated }: JobCardProps) {
           >
             <BellIcon className="h-4 w-4" />
             <span>通知</span>
+          </button>
+          <button
+            onClick={handleTestApplication}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-green-100 hover:bg-green-200 text-green-600 rounded transition-colors"
+            title="テスト応募を作成"
+          >
+            <UserPlusIcon className="h-4 w-4" />
+            <span>応募テスト</span>
           </button>
           <button
             onClick={handleDelete}

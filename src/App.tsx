@@ -1,24 +1,71 @@
 import { useState, useEffect } from 'react';
-import { PlusIcon, BellIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, BellIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 import { Job, Thread } from './types';
 import { IconButton } from './components/IconButton';
 import { JobCard } from './components/JobCard';
 import { ThreadList } from './components/ThreadList';
 import { CreateJobModal } from './components/CreateJobModal';
 import { EditJobModal } from './components/EditJobModal';
+import { Monitor } from './components/Monitor';
+import { TestMonitor } from './components/TestMonitor';
 import { getJobs, getThreads } from './lib/data';
+import { useRouter } from './lib/router';
+import { bus } from './lib/bus';
 
 function App() {
+  const { path, navigate } = useRouter();
   const [activeTab, setActiveTab] = useState<'jobs' | 'dm'>('jobs');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [showCreateJob, setShowCreateJob] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [notifications, setNotifications] = useState<string[]>([]);
 
   useEffect(() => {
     setJobs(getJobs());
     setThreads(getThreads());
   }, []);
+
+  useEffect(() => {
+    const handleApplicationAdded = (event: any) => {
+      if (event.type === 'APPLICATION_ADDED') {
+        const message = `${event.data.applicantName}さんが「${event.data.jobTitle}」に応募しました`;
+        setNotifications(prev => [...prev, message]);
+        
+        // Auto-remove notification after 5 seconds
+        setTimeout(() => {
+          setNotifications(prev => prev.slice(1));
+        }, 5000);
+      }
+    };
+
+    bus.on('APPLICATION_ADDED', handleApplicationAdded);
+    return () => bus.off('APPLICATION_ADDED', handleApplicationAdded);
+  }, []);
+
+  // Check URL parameters for monitor mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const isMonitorMode = urlParams.get('mode') === 'monitor';
+
+  // If we're in monitor mode, show the monitor
+  if (isMonitorMode) {
+    try {
+      return <Monitor />;
+    } catch (error) {
+      console.error('Monitor component error:', error);
+      return (
+        <div style={{ padding: '20px', backgroundColor: 'red', color: 'white' }}>
+          <h1>Monitor エラー</h1>
+          <p>エラー: {error instanceof Error ? error.message : 'Unknown error'}</p>
+        </div>
+      );
+    }
+  }
+
+  // If we're on the monitor route, show the monitor
+  if (path === '/monitor') {
+    return <Monitor />;
+  }
 
   const handleJobCreated = (newJob: Job) => {
     setJobs(prev => [...prev, newJob]);
@@ -43,6 +90,13 @@ function App() {
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">職人募集</h1>
             <div className="flex items-center gap-3">
+              <button 
+                onClick={() => window.open('/?mode=monitor', '_blank')}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium shadow-sm"
+              >
+                <ComputerDesktopIcon className="h-5 w-5 text-white" />
+                モニターを開く
+              </button>
               <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
                 <BellIcon className="h-5 w-5 text-gray-600" />
               </button>
@@ -142,6 +196,39 @@ function App() {
           />
         )}
       </div>
+
+      {/* Notification Toast */}
+      {notifications.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 1000
+        }}>
+          {notifications.map((notification, index) => (
+            <div
+              key={index}
+              style={{
+                backgroundColor: '#10b981',
+                color: 'white',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                marginBottom: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                maxWidth: '300px',
+                animation: 'slideIn 0.3s ease-out'
+              }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>
+                🎉 新しい応募
+              </div>
+              <div style={{ fontSize: '12px', opacity: 0.9 }}>
+                {notification}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

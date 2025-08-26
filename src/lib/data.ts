@@ -1,5 +1,6 @@
 import { Job, Application, Thread, Message } from '../types';
 import { generateId } from './ids';
+import { bus } from './bus';
 
 const STORAGE_KEYS = {
   JOBS: 'shokuninboshu_jobs',
@@ -61,6 +62,15 @@ export function createJob(jobData: Omit<Job, 'id' | 'createdAt' | 'lastUpdatedAt
   
   jobs.push(newJob);
   setStorageData(STORAGE_KEYS.JOBS, jobs);
+  
+  // Emit event for monitor
+  bus.emit('JOB_PUBLISHED', {
+    id: newJob.id,
+    title: newJob.summary,
+    trade: newJob.trade,
+    location: `${newJob.sitePref}${newJob.siteCity}`
+  });
+  
   return newJob;
 }
 
@@ -108,6 +118,36 @@ export function createApplication(appData: Omit<Application, 'id' | 'createdAt'>
   
   applications.push(newApp);
   setStorageData(STORAGE_KEYS.APPLICATIONS, applications);
+  
+  // Get job details for event
+  const job = getJobs().find(j => j.id === appData.jobId);
+  
+  // Create DM thread for this application
+  const thread = createThread({
+    jobId: appData.jobId,
+    counterpartName: appData.applicantName,
+    contactTel: appData.phone,
+    contactLineId: appData.lineId,
+    lastMessageText: `${appData.applicantName}さんから応募がありました。`,
+  });
+  
+  // Create initial message
+  createMessage({
+    threadId: thread.id,
+    jobId: appData.jobId,
+    role: 'system',
+    text: `${appData.applicantName}さんから「${job?.summary || 'Unknown Job'}」への応募がありました。${appData.note ? `メモ: ${appData.note}` : ''}`
+  });
+  
+  // Emit event for monitor
+  bus.emit('APPLICATION_ADDED', {
+    applicationId: newApp.id,
+    jobId: newApp.jobId,
+    jobTitle: job?.summary || 'Unknown Job',
+    applicantName: newApp.applicantName,
+    status: newApp.status
+  });
+  
   return newApp;
 }
 
@@ -181,4 +221,86 @@ export function createMessage(msgData: Omit<Message, 'id' | 'createdAt'>): Messa
   }
   
   return newMessage;
+}
+
+// Additional functions for monitor system
+export function updateApplicationStatus(id: string, status: Application['status']): Application | null {
+  const applications = getApplications();
+  const index = applications.findIndex(app => app.id === id);
+  
+  if (index === -1) return null;
+  
+  const oldStatus = applications[index].status;
+  applications[index] = {
+    ...applications[index],
+    status
+  };
+  
+  setStorageData(STORAGE_KEYS.APPLICATIONS, applications);
+  
+  // Get job details for event
+  const job = getJobs().find(j => j.id === applications[index].jobId);
+  
+  // Emit event for monitor
+  bus.emit('APP_STATUS_CHANGED', {
+    applicationId: id,
+    jobId: applications[index].jobId,
+    jobTitle: job?.summary || 'Unknown Job',
+    applicantName: applications[index].applicantName,
+    oldStatus,
+    status
+  });
+  
+  return applications[index];
+}
+
+export function getThreadById(id: string): (Thread & { messages: Array<{content: string, sender: string, timestamp: string}>, applicantName: string, jobTitle: string }) | null {
+  const thread = getThreads().find(t => t.id === id);
+  if (!thread) return null;
+  
+  const job = getJobs().find(j => j.id === thread.jobId);
+  const messages = getMessagesForThread(id).map(msg => ({
+    content: msg.text,
+    sender: msg.role,
+    timestamp: new Date(msg.createdAt).toISOString()
+  }));
+  
+  return {
+    ...thread,
+    messages,
+    applicantName: thread.counterpartName,
+    jobTitle: job?.summary || 'Unknown Job',
+    lastMessage: messages[messages.length - 1] || { content: '', sender: 'system', timestamp: new Date().toISOString() }
+  };
+}
+
+export function addMessage(threadId: string, messageData: { content: string, sender: string, timestamp: string }): any {
+  // Find the thread to get jobId
+  const threads = getThreads();
+  const thread = threads.find(t => t.id === threadId);
+  
+  if (!thread) {
+    console.error('Thread not found:', threadId);
+    return null;
+  }
+  
+  const message = createMessage({
+    threadId,
+    jobId: thread.jobId,
+    role: messageData.sender as any,
+    text: messageData.content
+  });
+  
+  const threadWithDetails = getThreadById(threadId);
+  
+  // Emit event for monitor
+  const eventType = messageData.sender === 'contractor' ? 'DM_SENT' : 'DM_REPLY';
+  bus.emit(eventType, {
+    threadId,
+    message: messageData,
+    jobTitle: threadWithDetails?.jobTitle || 'Unknown Job',
+    applicantName: threadWithDetails?.applicantName || 'Unknown User'
+  });
+  
+  return messageData;
 }
