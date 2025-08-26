@@ -49,9 +49,10 @@ function App() {
               {activeTab === 'jobs' && (
                 <button 
                   onClick={() => setShowCreateJob(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors font-medium shadow-sm"
+                  style={{backgroundColor: '#1BA3A3'}}
                 >
-                  <PlusIcon className="h-5 w-5" />
+                  <PlusIcon className="h-5 w-5 text-white" />
                   新規作成
                 </button>
               )}

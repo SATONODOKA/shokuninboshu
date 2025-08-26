@@ -185,7 +185,10 @@ export function CreateJobModal({ onClose, onJobCreated }: CreateJobModalProps) {
             </button>
             <button
               type="submit"
-              className="flex-1 py-2 px-4 bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors"
+              className="flex-1 py-2 px-4 text-white rounded-lg transition-colors font-medium"
+              style={{backgroundColor: '#1BA3A3'}}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#159090'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#1BA3A3'}
             >
               作成
             </button>
