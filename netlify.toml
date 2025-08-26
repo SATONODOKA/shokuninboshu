@@ -1,16 +1,10 @@
 [build]
   publish = "dist"
   command = "npm run build"
-  environment = { NODE_VERSION = "18" }
 
 [build.environment]
+  NODE_VERSION = "18"
   NODE_OPTIONS = "--max_old_space_size=4096"
-
-[[redirects]]
-  from = "/api/*"
-  to = "https://api.example.com/:splat"
-  status = 200
-  conditions = {Role = ["admin"]}
 
 [[redirects]]
   from = "/*"
