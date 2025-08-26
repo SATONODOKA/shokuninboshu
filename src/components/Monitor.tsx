@@ -4,6 +4,7 @@ import { bus, BusEvent } from '../lib/bus';
 import { NotificationFeed } from './NotificationFeed';
 import { DmList } from './DmList';
 import { DmThreadView } from './DmThreadView';
+import { createApplication } from '../lib/data';
 
 interface LineMessage {
   id: string;
@@ -66,13 +67,14 @@ export const Monitor = () => {
 
     setMessages(prev => [...prev, responseMessage]);
 
-    // Send response back to dashboard
-    bus.emit('APPLICATION_ADDED', {
-      applicationId: 'app-' + Date.now(),
+    // Create actual application record
+    createApplication({
       jobId,
-      jobTitle: messages.find(m => m.jobData?.id === jobId)?.jobData?.title || 'Unknown Job',
       applicantName,
-      status: response === 'apply' ? 'APPLIED' : 'DECLINED'
+      phone: '090-1234-5678',
+      lineId: `line_${applicantName.slice(0, 2)}`,
+      note: response === 'apply' ? 'LINEから応募' : 'LINEから辞退',
+      status: response === 'apply' ? 'APPLIED' : 'REJECTED'
     });
 
     setTimeout(() => {

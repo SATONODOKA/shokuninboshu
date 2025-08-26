@@ -8,6 +8,7 @@ import { CreateJobModal } from './components/CreateJobModal';
 import { EditJobModal } from './components/EditJobModal';
 import { Monitor } from './components/Monitor';
 import { TestMonitor } from './components/TestMonitor';
+import { DmThreadView } from './components/DmThreadView';
 import { getJobs, getThreads } from './lib/data';
 import { useRouter } from './lib/router';
 import { bus } from './lib/bus';
@@ -20,6 +21,7 @@ function App() {
   const [showCreateJob, setShowCreateJob] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [notifications, setNotifications] = useState<string[]>([]);
+  const [selectedThread, setSelectedThread] = useState<string | null>(null);
 
   useEffect(() => {
     setJobs(getJobs());
@@ -29,8 +31,11 @@ function App() {
   useEffect(() => {
     const handleApplicationAdded = (event: any) => {
       if (event.type === 'APPLICATION_ADDED') {
-        const message = `${event.data.applicantName}さんが「${event.data.jobTitle}」に応募しました`;
+        const message = `${event.data.applicantName}さんが「${event.data.jobTitle}」に${event.data.status === 'DECLINED' ? '応募を辞退しました' : '応募しました'}`;
         setNotifications(prev => [...prev, message]);
+        
+        // Update threads list
+        setThreads(getThreads());
         
         // Auto-remove notification after 5 seconds
         setTimeout(() => {
@@ -82,6 +87,22 @@ function App() {
   const handleEditJob = (job: Job) => {
     setEditingJob(job);
   };
+
+  const handleSelectThread = (threadId: string) => {
+    setSelectedThread(threadId);
+  };
+
+  // If a DM thread is selected, show the thread view
+  if (selectedThread && activeTab === 'dm') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <DmThreadView 
+          threadId={selectedThread}
+          onBack={() => setSelectedThread(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -175,7 +196,7 @@ function App() {
               </div>
             ) : (
               <div className="max-w-4xl">
-                <ThreadList threads={threads} />
+                <ThreadList threads={threads} onSelectThread={handleSelectThread} />
               </div>
             )}
           </div>

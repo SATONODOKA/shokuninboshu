@@ -122,22 +122,25 @@ export function createApplication(appData: Omit<Application, 'id' | 'createdAt'>
   // Get job details for event
   const job = getJobs().find(j => j.id === appData.jobId);
   
-  // Create DM thread for this application
-  const thread = createThread({
-    jobId: appData.jobId,
-    counterpartName: appData.applicantName,
-    contactTel: appData.phone,
-    contactLineId: appData.lineId,
-    lastMessageText: `${appData.applicantName}さんから応募がありました。`,
-  });
-  
-  // Create initial message
-  createMessage({
-    threadId: thread.id,
-    jobId: appData.jobId,
-    role: 'system',
-    text: `${appData.applicantName}さんから「${job?.summary || 'Unknown Job'}」への応募がありました。${appData.note ? `メモ: ${appData.note}` : ''}`
-  });
+  // Only create DM thread for actual applications (not declines)
+  if (appData.status === 'APPLIED') {
+    // Create DM thread for this application
+    const thread = createThread({
+      jobId: appData.jobId,
+      counterpartName: appData.applicantName,
+      contactTel: appData.phone,
+      contactLineId: appData.lineId,
+      lastMessageText: `${appData.applicantName}さんから応募がありました。`,
+    });
+    
+    // Create initial message
+    createMessage({
+      threadId: thread.id,
+      jobId: appData.jobId,
+      role: 'system',
+      text: `${appData.applicantName}さんから「${job?.summary || 'Unknown Job'}」への応募がありました。${appData.note ? `メモ: ${appData.note}` : ''}`
+    });
+  }
   
   // Emit event for monitor
   bus.emit('APPLICATION_ADDED', {

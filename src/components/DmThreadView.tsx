@@ -17,15 +17,21 @@ export const DmThreadView = ({ threadId, onBack }: DmThreadViewProps) => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState(() => {
+    const threadData = getThreadById(threadId);
+    return threadData?.messages || [];
+  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [thread?.messages]);
+  }, [messages]);
 
   useEffect(() => {
     const handleEvent = (event: BusEvent) => {
       if ((event.type === 'DM_SENT' || event.type === 'DM_REPLY') && event.data.threadId === threadId) {
-        setThread(getThreadById(threadId));
+        const updatedThread = getThreadById(threadId);
+        setThread(updatedThread);
+        setMessages(updatedThread?.messages || []);
       }
     };
 
@@ -50,31 +56,31 @@ export const DmThreadView = ({ threadId, onBack }: DmThreadViewProps) => {
         timestamp: new Date().toISOString()
       });
 
-      bus.emit('DM_SENT', {
-        threadId,
-        message: newMessage,
-        jobTitle: thread.jobTitle,
-        applicantName: thread.applicantName
-      });
-
       setMessage('');
-      setThread(getThreadById(threadId));
+      const updatedThread = getThreadById(threadId);
+      setThread(updatedThread);
+      setMessages(updatedThread?.messages || []);
 
+      // Simulate auto-reply from worker (optional)
       setTimeout(() => {
-        const replyMessage = addMessage(threadId, {
-          content: `承知いたしました。お忙しい中ありがとうございます。`,
-          sender: 'applicant',
+        const replyMessages = [
+          'ありがとうございます！',
+          '承知いたしました。',
+          'よろしくお願いします。',
+          'ご連絡ありがとうございます。',
+          'はい、分かりました。'
+        ];
+        const randomReply = replyMessages[Math.floor(Math.random() * replyMessages.length)];
+
+        addMessage(threadId, {
+          content: randomReply,
+          sender: 'worker',
           timestamp: new Date().toISOString()
         });
 
-        bus.emit('DM_REPLY', {
-          threadId,
-          message: replyMessage,
-          jobTitle: thread.jobTitle,
-          applicantName: thread.applicantName
-        });
-
-        setThread(getThreadById(threadId));
+        const reUpdatedThread = getThreadById(threadId);
+        setThread(reUpdatedThread);
+        setMessages(reUpdatedThread?.messages || []);
       }, 1000 + Math.random() * 2000);
 
     } catch (error) {
@@ -123,7 +129,7 @@ export const DmThreadView = ({ threadId, onBack }: DmThreadViewProps) => {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {thread.messages.map((msg, index) => (
+        {messages.map((msg, index) => (
           <div
             key={index}
             className={`flex ${msg.sender === 'contractor' ? 'justify-end' : 'justify-start'}`}
@@ -131,11 +137,17 @@ export const DmThreadView = ({ threadId, onBack }: DmThreadViewProps) => {
             <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
               msg.sender === 'contractor'
                 ? 'bg-teal-500 text-white'
+                : msg.sender === 'system'
+                ? 'bg-yellow-50 border border-yellow-200 text-yellow-800'
                 : 'bg-white border border-gray-200 text-gray-900'
             }`}>
               <p className="text-sm">{msg.content}</p>
               <p className={`text-xs mt-1 ${
-                msg.sender === 'contractor' ? 'text-teal-100' : 'text-gray-500'
+                msg.sender === 'contractor' 
+                  ? 'text-teal-100' 
+                  : msg.sender === 'system'
+                  ? 'text-yellow-600'
+                  : 'text-gray-500'
               }`}>
                 {formatTime(msg.timestamp)}
               </p>
