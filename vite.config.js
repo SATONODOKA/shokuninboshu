@@ -56,6 +56,6 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom']
   },
-  // Base URL for proper deployment
-  base: './'
+  // Base URL for Netlify deployment
+  base: '/'
 })
