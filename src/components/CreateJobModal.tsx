@@ -46,21 +46,21 @@ export function CreateJobModal({ onClose, onJobCreated }: CreateJobModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b border-ui-line">
-          <h2 className="text-lg font-bold text-ink-900">求人を作成</h2>
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">求人を作成</h2>
           <IconButton onClick={onClose}>
-            <XMarkIcon className="h-5 w-5" />
+            <XMarkIcon className="h-5 w-5 text-gray-400" />
           </IconButton>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-ink-800 mb-2">職種 *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">職種 *</label>
             <select
               value={formData.trade}
               onChange={(e) => setFormData({...formData, trade: e.target.value})}
-              className="w-full border border-ui-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
               required
             >
               <option value="">選択してください</option>
@@ -72,11 +72,11 @@ export function CreateJobModal({ onClose, onJobCreated }: CreateJobModalProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-ink-800 mb-2">都道府県 *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">都道府県 *</label>
               <select
                 value={formData.sitePref}
                 onChange={(e) => setFormData({...formData, sitePref: e.target.value, siteCity: ''})}
-                className="w-full border border-ui-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
                 required
               >
                 <option value="">選択</option>
@@ -86,11 +86,11 @@ export function CreateJobModal({ onClose, onJobCreated }: CreateJobModalProps) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink-800 mb-2">市区町村 *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">市区町村 *</label>
               <select
                 value={formData.siteCity}
                 onChange={(e) => setFormData({...formData, siteCity: e.target.value})}
-                className="w-full border border-ui-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
                 required
                 disabled={!formData.sitePref}
               >
@@ -103,7 +103,7 @@ export function CreateJobModal({ onClose, onJobCreated }: CreateJobModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-ink-800 mb-2">概要 *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">概要 *</label>
             <textarea
               value={formData.summary}
               onChange={(e) => setFormData({...formData, summary: e.target.value})}
@@ -116,29 +116,29 @@ export function CreateJobModal({ onClose, onJobCreated }: CreateJobModalProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-ink-800 mb-2">開始日 *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">開始日 *</label>
               <input
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => setFormData({...formData, startDate: e.target.value})}
-                className="w-full border border-ui-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink-800 mb-2">終了日 *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">終了日 *</label>
               <input
                 type="date"
                 value={formData.endDate}
                 onChange={(e) => setFormData({...formData, endDate: e.target.value})}
-                className="w-full border border-ui-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-ink-800 mb-2">給与帯 *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">給与帯 *</label>
             <select
               value={formData.salaryBand}
               onChange={(e) => setFormData({...formData, salaryBand: e.target.value})}
@@ -153,7 +153,7 @@ export function CreateJobModal({ onClose, onJobCreated }: CreateJobModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-ink-800 mb-2">給与備考</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">給与備考</label>
             <input
               type="text"
               value={formData.salaryNote}
@@ -164,7 +164,7 @@ export function CreateJobModal({ onClose, onJobCreated }: CreateJobModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-ink-800 mb-2">必要人数 *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">必要人数 *</label>
             <input
               type="number"
               min="1"
@@ -179,7 +179,7 @@ export function CreateJobModal({ onClose, onJobCreated }: CreateJobModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 px-4 border border-ui-line rounded-lg text-ink-600 hover:bg-gray-50 transition-colors"
+              className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
             >
               キャンセル
             </button>

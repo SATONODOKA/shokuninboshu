@@ -22,77 +22,101 @@ function App() {
     setJobs(prev => [...prev, newJob]);
   };
 
+  const handleJobDeleted = (id: string) => {
+    setJobs(prev => prev.filter(job => job.id !== id));
+  };
+
+  const handleJobUpdated = (updatedJob: Job) => {
+    setJobs(prev => prev.map(job => job.id === updatedJob.id ? updatedJob : job));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto bg-white min-h-screen">
-        <header className="bg-white border-b border-ui-line px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-lg font-bold text-ink-900">職人募集</h1>
-            <div className="flex items-center gap-2">
-              <IconButton>
-                <BellIcon className="h-5 w-5" />
-              </IconButton>
+      <div className="min-h-screen">
+        <header className="bg-brand px-6 py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-white">職人募集</h1>
+            <div className="flex items-center gap-3">
+              <button className="p-2 rounded-lg hover:bg-brand-hover transition-colors">
+                <BellIcon className="h-5 w-5 text-white" />
+              </button>
               {activeTab === 'jobs' && (
-                <IconButton variant="primary" onClick={() => setShowCreateJob(true)}>
+                <button 
+                  onClick={() => setShowCreateJob(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-brand rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
                   <PlusIcon className="h-5 w-5" />
-                </IconButton>
+                  新規作成
+                </button>
               )}
             </div>
           </div>
         </header>
 
-        <div className="border-b border-ui-line">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('jobs')}
-              className={`flex-1 py-3 text-center font-medium border-b-2 transition-colors ${
-                activeTab === 'jobs'
-                  ? 'border-brand text-brand'
-                  : 'border-transparent text-ink-600 hover:text-ink-800'
-              }`}
-            >
-              求人
-            </button>
-            <button
-              onClick={() => setActiveTab('dm')}
-              className={`flex-1 py-3 text-center font-medium border-b-2 transition-colors relative ${
-                activeTab === 'dm'
-                  ? 'border-brand text-brand'
-                  : 'border-transparent text-ink-600 hover:text-ink-800'
-              }`}
-            >
-              DM
-              {threads.some(t => t.unreadCount > 0) && (
-                <span className="absolute top-1 right-1/4 w-2 h-2 bg-state-err rounded-full"></span>
-              )}
-            </button>
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex gap-8">
+              <button
+                onClick={() => setActiveTab('jobs')}
+                className={`py-3 px-1 font-medium border-b-3 transition-colors ${
+                  activeTab === 'jobs'
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-gray-600 hover:text-gray-800'
+                }`}
+                style={{borderBottomWidth: '3px'}}
+              >
+                求人管理
+              </button>
+              <button
+                onClick={() => setActiveTab('dm')}
+                className={`py-3 px-1 font-medium border-b-3 transition-colors relative ${
+                  activeTab === 'dm'
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-gray-600 hover:text-gray-800'
+                }`}
+                style={{borderBottomWidth: '3px'}}
+              >
+                メッセージ
+                {threads.some(t => t.unreadCount > 0) && (
+                  <span className="absolute -top-1 -right-3 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
         <main className="flex-1">
-          {activeTab === 'jobs' ? (
-            <div className="p-4 space-y-3">
-              {jobs.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-ink-500 mb-4">まだ求人がありません</p>
-                  <IconButton 
-                    variant="primary" 
-                    onClick={() => setShowCreateJob(true)}
-                    className="px-6 py-2"
-                  >
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    求人を作成
-                  </IconButton>
-                </div>
-              ) : (
-                jobs.map(job => (
-                  <JobCard key={job.id} job={job} />
-                ))
-              )}
-            </div>
-          ) : (
-            <ThreadList threads={threads} />
-          )}
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            {activeTab === 'jobs' ? (
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {jobs.length === 0 ? (
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-gray-500 mb-4 text-lg">まだ求人がありません</p>
+                    <button 
+                      onClick={() => setShowCreateJob(true)}
+                      className="inline-flex items-center px-6 py-3 bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors"
+                    >
+                      <PlusIcon className="h-5 w-5 mr-2" />
+                      求人を作成
+                    </button>
+                  </div>
+                ) : (
+                  jobs.map(job => (
+                    <JobCard 
+                      key={job.id} 
+                      job={job} 
+                      onDeleted={handleJobDeleted}
+                      onUpdated={handleJobUpdated}
+                    />
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="max-w-4xl">
+                <ThreadList threads={threads} />
+              </div>
+            )}
+          </div>
         </main>
 
         {showCreateJob && (
