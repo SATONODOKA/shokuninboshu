@@ -10,8 +10,12 @@ const STORAGE_KEYS = {
 
 function safeLocalStorage() {
   try {
-    return typeof localStorage !== 'undefined' ? localStorage : null;
-  } catch {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    return window.localStorage;
+  } catch (error) {
+    console.warn('localStorage not available:', error);
     return null;
   }
 }

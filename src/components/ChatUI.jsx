@@ -1,9 +1,9 @@
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../hooks/useAppContext';
 
 const ChatUI = () => {
   const { messages, sendMessage, craftsmanInfo } = useAppContext();
 
-  const handleApply = (jobData) => {
+  const handleApply = () => {
     const replyMessage = {
       id: Date.now(),
       type: 'reply',
@@ -14,7 +14,7 @@ const ChatUI = () => {
     sendMessage(replyMessage);
   };
 
-  const handleSkip = (jobData) => {
+  const handleSkip = () => {
     const replyMessage = {
       id: Date.now(),
       type: 'reply',
@@ -80,14 +80,14 @@ const ChatUI = () => {
                   {message.type === 'job' && (
                     <div className="flex gap-2 mt-3">
                       <button
-                        onClick={() => handleApply(message.jobData)}
+                        onClick={() => handleApply()}
                         className="flex-1 py-2 px-3 text-white text-xs rounded-lg hover:opacity-90 transition-opacity"
                         style={{ backgroundColor: '#007AFF' }}
                       >
                         応募する
                       </button>
                       <button
-                        onClick={() => handleSkip(message.jobData)}
+                        onClick={() => handleSkip()}
                         className="flex-1 py-2 px-3 text-white text-xs rounded-lg hover:opacity-90 transition-opacity"
                         style={{ backgroundColor: '#8E8E93' }}
                       >

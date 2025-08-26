@@ -44,7 +44,9 @@ export function EditJobModal({ job, onClose, onJobUpdated }: EditJobModalProps) 
     onClose();
   };
 
-  const availableCities = formData.sitePref ? CITIES_MAP[formData.sitePref as keyof typeof CITIES_MAP] || [] : [];
+  const availableCities = formData.sitePref && formData.sitePref in CITIES_MAP 
+    ? CITIES_MAP[formData.sitePref as keyof typeof CITIES_MAP] || [] 
+    : [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -189,8 +191,8 @@ export function EditJobModal({ job, onClose, onJobUpdated }: EditJobModalProps) 
               type="submit"
               className="flex-1 py-2 px-4 text-white rounded-lg transition-colors font-medium"
               style={{backgroundColor: '#1BA3A3'}}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#159090'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#1BA3A3'}
+              onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#159090'}
+              onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#1BA3A3'}
             >
               更新
             </button>
