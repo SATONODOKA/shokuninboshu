@@ -22,8 +22,15 @@ function App() {
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [notifications, setNotifications] = useState<string[]>([]);
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
+  const [isMonitorMode, setIsMonitorMode] = useState(false);
 
   useEffect(() => {
+    // Check URL parameters for monitor mode - client-side only
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      setIsMonitorMode(urlParams.get('mode') === 'monitor');
+    }
+
     setJobs(getJobs());
     setThreads(getThreads());
   }, []);
@@ -47,10 +54,6 @@ function App() {
     bus.on('APPLICATION_ADDED', handleApplicationAdded);
     return () => bus.off('APPLICATION_ADDED', handleApplicationAdded);
   }, []);
-
-  // Check URL parameters for monitor mode
-  const urlParams = new URLSearchParams(window.location.search);
-  const isMonitorMode = urlParams.get('mode') === 'monitor';
 
   // If we're in monitor mode, show the monitor
   if (isMonitorMode) {
