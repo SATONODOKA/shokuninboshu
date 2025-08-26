@@ -50,38 +50,14 @@ export const DmThreadView = ({ threadId, onBack }: DmThreadViewProps) => {
 
     setIsLoading(true);
     try {
-      const newMessage = addMessage(threadId, {
+      // addMessage will emit DM_SENT event which will update the UI via event listener
+      addMessage(threadId, {
         content: message.trim(),
         sender: 'contractor',
         timestamp: new Date().toISOString()
       });
 
       setMessage('');
-      const updatedThread = getThreadById(threadId);
-      setThread(updatedThread);
-      setMessages(updatedThread?.messages || []);
-
-      // Simulate auto-reply from worker (optional)
-      setTimeout(() => {
-        const replyMessages = [
-          'ありがとうございます！',
-          '承知いたしました。',
-          'よろしくお願いします。',
-          'ご連絡ありがとうございます。',
-          'はい、分かりました。'
-        ];
-        const randomReply = replyMessages[Math.floor(Math.random() * replyMessages.length)];
-
-        addMessage(threadId, {
-          content: randomReply,
-          sender: 'worker',
-          timestamp: new Date().toISOString()
-        });
-
-        const reUpdatedThread = getThreadById(threadId);
-        setThread(reUpdatedThread);
-        setMessages(reUpdatedThread?.messages || []);
-      }, 1000 + Math.random() * 2000);
 
     } catch (error) {
       console.error('Failed to send message:', error);

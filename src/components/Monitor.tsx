@@ -77,6 +77,7 @@ export const Monitor = () => {
     };
 
     const handleDmReceived = (event: BusEvent) => {
+      // Only receive messages from contractor (DM_SENT), not our own replies (DM_REPLY)
       if (event.type === 'DM_SENT' && event.data.threadId) {
         const newMessage: LineMessage = {
           id: 'msg-' + Date.now(),
