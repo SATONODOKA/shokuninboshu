@@ -10,9 +10,7 @@ export interface Job {
   salaryNote?: string;
   headcountNeeded: number;
   headcountFilled: number;
-  startByDeadlineDays: number;
-  stopPublish: boolean;
-  status: "OPEN" | "PAUSED" | "IN_PROGRESS" | "CLOSED";
+  status: "OPEN" | "PAUSED" | "CLOSED";
   notifyCount: number;
   createdAt: number;
   lastUpdatedAt: number;
@@ -22,23 +20,33 @@ export interface Application {
   id: string;
   jobId: string;
   applicantName: string;
-  applicantTrade?: string;
-  applicantPref?: string;
-  applicantCity?: string;
   phone?: string;
   lineId?: string;
-  selfReportedDriveMin?: number;
-  status: "APPLIED" | "INTERVIEWING" | "HIRED" | "REJECTED";
   note?: string;
+  status: "APPLIED" | "INTERVIEWING" | "HIRED" | "REJECTED";
   createdAt: number;
 }
 
-export interface JobChatMessage {
+export interface Thread {
   id: string;
   jobId: string;
-  role: "system" | "contractor" | "worker";
+  counterpartName: string;
+  contactTel?: string;
+  contactLineId?: string;
+  lastMessageText: string;
+  lastMessageAt: number;
+  hasReply: boolean;
+  unreadCount: number;
+}
+
+export interface Message {
+  id: string;
+  threadId: string;
+  jobId: string;
+  role: "contractor" | "worker" | "system";
   text: string;
   createdAt: number;
+  read?: boolean;
 }
 
 export const TRADES = ['大工', '電気工事士', '左官', '内装', '塗装', '設備'] as const;
@@ -56,5 +64,3 @@ export const CITIES_MAP = {
 } as const;
 
 export const SALARY_BANDS = ['〜20万', '20–40万', '40–60万', '60万〜'] as const;
-
-export const DEADLINE_BUFFERS = [3, 5, 7, 10, 14] as const;
