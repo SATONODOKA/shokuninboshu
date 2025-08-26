@@ -1,4 +1,4 @@
-import ContractorDashboard from './components/ContractorDashboard';
+import ContractorDashboard from './components/ContractorDashboard.tsx';
 
 function App() {
   return <ContractorDashboard />;

@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "@types/node": "^24.3.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
@@ -26,6 +27,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "terser": "^5.43.1",
+    "typescript": "^5.9.2",
     "vite": "^7.1.2"
   }
 }

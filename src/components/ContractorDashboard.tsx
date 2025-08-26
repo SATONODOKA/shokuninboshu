@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { Job } from '../types';
 import { getArray } from '../lib/storage';
-import SideNavigation from './SideNavigation';
-import JobBoard from './JobBoard';
-import CreateJobForm from './CreateJobForm';
-import JobSections from './JobSections';
-import JobDetailModal from './JobDetailModal';
+import SideNavigation from './SideNavigation.tsx';
+import JobBoard from './JobBoard.tsx';
+import CreateJobForm from './CreateJobForm.tsx';
+import JobSections from './JobSections.tsx';
+import JobDetailModal from './JobDetailModal.tsx';
 
 export default function ContractorDashboard() {
   const [currentSection, setCurrentSection] = useState('board');
@@ -15,11 +15,9 @@ export default function ContractorDashboard() {
 
   // localStorage初期化
   useEffect(() => {
-    const keys = ['jobs', 'applications', 'jobChats'];
-    keys.forEach(key => {
-      if (!localStorage.getItem(key)) {
-        localStorage.setItem(key, JSON.stringify([]));
-      }
+    // 強化されたストレージ初期化を使用
+    import('../lib/storage').then(({ initializeStorage }) => {
+      initializeStorage();
     });
   }, []);
 

@@ -1,0 +1,22 @@
+# Security headers for all pages
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Cache control for static assets
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache control for HTML files
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Cache control for service workers and manifest
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/manifest.json
+  Cache-Control: public, max-age=86400
