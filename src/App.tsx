@@ -5,6 +5,7 @@ import { IconButton } from './components/IconButton';
 import { JobCard } from './components/JobCard';
 import { ThreadList } from './components/ThreadList';
 import { CreateJobModal } from './components/CreateJobModal';
+import { EditJobModal } from './components/EditJobModal';
 import { getJobs, getThreads } from './lib/data';
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [showCreateJob, setShowCreateJob] = useState(false);
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
 
   useEffect(() => {
     setJobs(getJobs());
@@ -30,20 +32,24 @@ function App() {
     setJobs(prev => prev.map(job => job.id === updatedJob.id ? updatedJob : job));
   };
 
+  const handleEditJob = (job: Job) => {
+    setEditingJob(job);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="min-h-screen">
-        <header className="bg-brand px-6 py-4">
+        <header className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">職人募集</h1>
+            <h1 className="text-2xl font-bold text-gray-900">職人募集</h1>
             <div className="flex items-center gap-3">
-              <button className="p-2 rounded-lg hover:bg-brand-hover transition-colors">
-                <BellIcon className="h-5 w-5 text-white" />
+              <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <BellIcon className="h-5 w-5 text-gray-600" />
               </button>
               {activeTab === 'jobs' && (
                 <button 
                   onClick={() => setShowCreateJob(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-brand rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors font-medium"
                 >
                   <PlusIcon className="h-5 w-5" />
                   新規作成
@@ -105,6 +111,7 @@ function App() {
                     <JobCard 
                       key={job.id} 
                       job={job} 
+                      onEdit={handleEditJob}
                       onDeleted={handleJobDeleted}
                       onUpdated={handleJobUpdated}
                     />
@@ -123,6 +130,14 @@ function App() {
           <CreateJobModal 
             onClose={() => setShowCreateJob(false)} 
             onJobCreated={handleJobCreated}
+          />
+        )}
+
+        {editingJob && (
+          <EditJobModal 
+            job={editingJob}
+            onClose={() => setEditingJob(null)} 
+            onJobUpdated={handleJobUpdated}
           />
         )}
       </div>
