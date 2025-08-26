@@ -4,11 +4,11 @@ import { bus, BusEvent } from '../lib/bus';
 import { NotificationFeed } from './NotificationFeed';
 import { DmList } from './DmList';
 import { DmThreadView } from './DmThreadView';
-import { createApplication } from '../lib/data';
+import { createApplication, deleteUserData, addMessage, getThreadById } from '../lib/data';
 
 interface LineMessage {
   id: string;
-  type: 'job_notification' | 'application_response';
+  type: 'job_notification' | 'application_response' | 'user_message' | 'contractor_message';
   timestamp: number;
   jobData?: {
     id: string;
@@ -23,13 +23,40 @@ interface LineMessage {
     response: 'apply' | 'decline';
     applicantName: string;
   };
+  messageData?: {
+    threadId?: string;
+    content: string;
+    sender: string;
+  };
 }
 
+const STORAGE_KEYS = {
+  LINE_MESSAGES: 'line_mock_messages',
+  LINE_THREADS: 'line_mock_threads'
+} as const;
+
 export const Monitor = () => {
-  const [messages, setMessages] = useState<LineMessage[]>([]);
+  const [messages, setMessages] = useState<LineMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.LINE_MESSAGES);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [applicantName, setApplicantName] = useState('田中太郎');
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [userMessage, setUserMessage] = useState('');
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.LINE_MESSAGES, JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
+    // Delete 佐藤花子's data on first load
+    deleteUserData('佐藤花子');
+
     const handleJobNotification = (event: BusEvent) => {
       if (event.type === 'JOB_PUBLISHED') {
         const newMessage: LineMessage = {
@@ -49,8 +76,29 @@ export const Monitor = () => {
       }
     };
 
+    const handleDmReceived = (event: BusEvent) => {
+      if (event.type === 'DM_SENT' && event.data.threadId) {
+        const newMessage: LineMessage = {
+          id: 'msg-' + Date.now(),
+          type: 'contractor_message',
+          timestamp: Date.now(),
+          messageData: {
+            threadId: event.data.threadId,
+            content: event.data.message.content,
+            sender: 'contractor'
+          }
+        };
+        setMessages(prev => [...prev, newMessage]);
+      }
+    };
+
     bus.on('JOB_PUBLISHED', handleJobNotification);
-    return () => bus.off('JOB_PUBLISHED', handleJobNotification);
+    bus.on('DM_SENT', handleDmReceived);
+    
+    return () => {
+      bus.off('JOB_PUBLISHED', handleJobNotification);
+      bus.off('DM_SENT', handleDmReceived);
+    };
   }, []);
 
   const handleJobResponse = (jobId: string, response: 'apply' | 'decline') => {
@@ -68,7 +116,7 @@ export const Monitor = () => {
     setMessages(prev => [...prev, responseMessage]);
 
     // Create actual application record
-    createApplication({
+    const app = createApplication({
       jobId,
       applicantName,
       phone: '090-1234-5678',
@@ -77,9 +125,49 @@ export const Monitor = () => {
       status: response === 'apply' ? 'APPLIED' : 'REJECTED'
     });
 
+    // If applied, set active thread for message sync
+    if (response === 'apply') {
+      // Find the thread that was created for this application
+      setTimeout(() => {
+        const threads = JSON.parse(localStorage.getItem('shokuninboshu_threads') || '[]');
+        const thread = threads.find((t: any) => t.counterpartName === applicantName && t.jobId === jobId);
+        if (thread) {
+          setActiveThreadId(thread.id);
+        }
+      }, 100);
+    }
+
     setTimeout(() => {
       alert(response === 'apply' ? '応募を送信しました！' : '応募を辞退しました。');
     }, 500);
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userMessage.trim() || !activeThreadId) return;
+
+    // Add message to LINE chat
+    const newMessage: LineMessage = {
+      id: 'msg-' + Date.now(),
+      type: 'user_message',
+      timestamp: Date.now(),
+      messageData: {
+        threadId: activeThreadId,
+        content: userMessage.trim(),
+        sender: 'worker'
+      }
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+
+    // Send to DM system
+    addMessage(activeThreadId, {
+      content: userMessage.trim(),
+      sender: 'worker',
+      timestamp: new Date().toISOString()
+    });
+
+    setUserMessage('');
   };
 
   const formatTime = (timestamp: number) => {
@@ -129,7 +217,8 @@ export const Monitor = () => {
       <div style={{
         padding: '16px',
         minHeight: 'calc(100vh - 64px)',
-        backgroundColor: '#f5f5f5'
+        backgroundColor: '#f5f5f5',
+        paddingBottom: activeThreadId ? '80px' : '16px'
       }}>
         {messages.length === 0 && (
           <div style={{
@@ -255,9 +344,116 @@ export const Monitor = () => {
                 </div>
               </div>
             )}
+
+            {message.type === 'user_message' && message.messageData && (
+              <div style={{
+                textAlign: 'right',
+                marginBottom: '8px'
+              }}>
+                <div style={{
+                  display: 'inline-block',
+                  backgroundColor: '#00b900',
+                  color: 'white',
+                  padding: '8px 12px',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  maxWidth: '250px',
+                  textAlign: 'left'
+                }}>
+                  {message.messageData.content}
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#999',
+                  marginTop: '4px'
+                }}>
+                  {formatTime(message.timestamp)}
+                </div>
+              </div>
+            )}
+
+            {message.type === 'contractor_message' && message.messageData && (
+              <div style={{
+                textAlign: 'left',
+                marginBottom: '8px'
+              }}>
+                <div style={{
+                  display: 'inline-block',
+                  backgroundColor: 'white',
+                  color: '#333',
+                  padding: '8px 12px',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  maxWidth: '250px',
+                  border: '1px solid #ddd'
+                }}>
+                  {message.messageData.content}
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#999',
+                  marginTop: '4px'
+                }}>
+                  {formatTime(message.timestamp)}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
+
+      {/* Message Input - Only show when there's an active thread */}
+      {activeThreadId && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: 'white',
+          borderTop: '1px solid #ddd',
+          padding: '12px 16px'
+        }}>
+          <form onSubmit={handleSendMessage} style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center'
+          }}>
+            <input
+              type="text"
+              value={userMessage}
+              onChange={(e) => setUserMessage(e.target.value)}
+              placeholder="メッセージを入力..."
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '20px',
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            />
+            <button
+              type="submit"
+              disabled={!userMessage.trim()}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: userMessage.trim() ? '#00b900' : '#ddd',
+                color: 'white',
+                border: 'none',
+                cursor: userMessage.trim() ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px'
+              }}
+            >
+              ➤
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

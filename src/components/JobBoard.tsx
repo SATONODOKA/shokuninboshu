@@ -3,6 +3,7 @@ import type { Job, Application } from '../types';
 import { getArray, upsertItemById, removeItemById, pushItem } from '../lib/storage';
 import { computeStartDeadline, formatDate } from '../utils/dates';
 import { generateId } from '../lib/ids';
+import { bus } from '../lib/bus';
 
 interface JobBoardProps {
   onCreateNew: () => void;
@@ -39,6 +40,16 @@ export default function JobBoard({ onCreateNew, onJobDetail, onEditJob }: JobBoa
       role: 'system',
       text: `募集通知を送信しました（${job.notifyCount + 1}回目）`,
       createdAt: Date.now()
+    });
+
+    // Send notification to LINE mock
+    bus.emit('JOB_PUBLISHED', {
+      id: job.id,
+      title: job.summary,
+      trade: job.trade,
+      location: `${job.sitePref}${job.siteCity}`,
+      salary: job.salaryAmount ? `${job.salaryAmount}万円` : '応相談',
+      period: job.workPeriod || '応相談'
     });
     
     loadData();

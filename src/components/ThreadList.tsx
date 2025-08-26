@@ -10,6 +10,9 @@ interface ThreadListProps {
 export function ThreadList({ threads, onSelectThread }: ThreadListProps) {
   const jobs = getJobs();
 
+  // Sort threads by lastMessageAt in descending order (newest first)
+  const sortedThreads = [...threads].sort((a, b) => b.lastMessageAt - a.lastMessageAt);
+
   if (threads.length === 0) {
     return (
       <div className="text-center py-12">
@@ -22,7 +25,7 @@ export function ThreadList({ threads, onSelectThread }: ThreadListProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
       <div className="divide-y divide-gray-200">
-        {threads.map(thread => {
+        {sortedThreads.map(thread => {
           const job = jobs.find(j => j.id === thread.jobId);
           return (
             <div 

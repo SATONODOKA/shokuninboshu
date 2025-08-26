@@ -63,14 +63,6 @@ export function createJob(jobData: Omit<Job, 'id' | 'createdAt' | 'lastUpdatedAt
   jobs.push(newJob);
   setStorageData(STORAGE_KEYS.JOBS, jobs);
   
-  // Emit event for monitor
-  bus.emit('JOB_PUBLISHED', {
-    id: newJob.id,
-    title: newJob.summary,
-    trade: newJob.trade,
-    location: `${newJob.sitePref}${newJob.siteCity}`
-  });
-  
   return newJob;
 }
 
@@ -224,6 +216,22 @@ export function createMessage(msgData: Omit<Message, 'id' | 'createdAt'>): Messa
   }
   
   return newMessage;
+}
+
+// Function to delete specific user data
+export function deleteUserData(userName: string): void {
+  // Delete applications
+  const applications = getApplications().filter(app => app.applicantName !== userName);
+  setStorageData(STORAGE_KEYS.APPLICATIONS, applications);
+
+  // Delete threads
+  const threads = getThreads().filter(thread => thread.counterpartName !== userName);
+  setStorageData(STORAGE_KEYS.THREADS, threads);
+
+  // Delete messages for deleted threads
+  const threadIds = getThreads().map(t => t.id);
+  const messages = getMessages().filter(msg => threadIds.includes(msg.threadId));
+  setStorageData(STORAGE_KEYS.MESSAGES, messages);
 }
 
 // Additional functions for monitor system
