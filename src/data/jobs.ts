@@ -1,11 +1,11 @@
-import { Job } from '../types';
+import { Job, Trade, Pref, JobStatus } from '../types';
 
 export const mockJobs: Job[] = [
   {
     id: 'job-001',
     title: '【大工】相模原 2名',
-    trade: '大工',
-    pref: '神奈川',
+    trade: '大工' as Trade,
+    pref: '神奈川' as Pref,
     city: '相模原市',
     startDate: '2025-08-30',
     endDate: '2025-09-06',
@@ -13,13 +13,15 @@ export const mockJobs: Job[] = [
     need: 2,
     decided: 0,
     summary: '新築住宅の建築工事です。経験者歓迎。',
-    notifyCount: 3
+    notifyCount: 3,
+    status: 'OPEN' as JobStatus,
+    isPublished: true
   },
   {
     id: 'job-002',
     title: '【電気】新宿 1名',
-    trade: '電気',
-    pref: '東京',
+    trade: '電気' as Trade,
+    pref: '東京' as Pref,
     city: '新宿区',
     startDate: '2025-09-01',
     endDate: '2025-09-15',
@@ -27,13 +29,15 @@ export const mockJobs: Job[] = [
     need: 1,
     decided: 0,
     summary: 'オフィスビルの電気設備工事を担当していただきます。',
-    notifyCount: 1
+    notifyCount: 1,
+    status: 'OPEN' as JobStatus,
+    isPublished: true
   },
   {
     id: 'job-003',
     title: '【左官】浦安 3名',
-    trade: '左官',
-    pref: '千葉',
+    trade: '左官' as Trade,
+    pref: '千葉' as Pref,
     city: '浦安市',
     startDate: '2025-09-10',
     endDate: '2025-09-20',
@@ -41,13 +45,15 @@ export const mockJobs: Job[] = [
     need: 3,
     decided: 1,
     summary: 'マンションの左官工事です。丁寧な作業ができる方を募集。',
-    notifyCount: 5
+    notifyCount: 5,
+    status: 'OPEN' as JobStatus,
+    isPublished: true
   },
   {
     id: 'job-004',
     title: '【大工】川口 4名',
-    trade: '大工',
-    pref: '埼玉',
+    trade: '大工' as Trade,
+    pref: '埼玉' as Pref,
     city: '川口市',
     startDate: '2025-08-28',
     endDate: '2025-09-10',
@@ -55,13 +61,15 @@ export const mockJobs: Job[] = [
     need: 4,
     decided: 2,
     summary: '戸建て住宅の増築工事。チームワークを重視します。',
-    notifyCount: 7
+    notifyCount: 7,
+    status: 'PAUSED' as JobStatus,
+    isPublished: false
   },
   {
     id: 'job-005',
     title: '【電気】品川 2名',
-    trade: '電気',
-    pref: '東京',
+    trade: '電気' as Trade,
+    pref: '東京' as Pref,
     city: '品川区',
     startDate: '2025-09-05',
     endDate: '2025-09-12',
@@ -69,6 +77,8 @@ export const mockJobs: Job[] = [
     need: 2,
     decided: 0,
     summary: '商業施設の照明設備工事を行います。',
-    notifyCount: 2
+    notifyCount: 2,
+    status: 'OPEN' as JobStatus,
+    isPublished: true
   }
 ];

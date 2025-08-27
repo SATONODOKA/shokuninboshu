@@ -17,7 +17,6 @@ export default function MessageCompose() {
   const [message, setMessage] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [sendResults, setSendResults] = useState<{success: string[], failed: string[]}>({success: [], failed: []});
 
   const maxCharacters = 500;
 
@@ -89,7 +88,6 @@ export default function MessageCompose() {
       }
     }
 
-    setSendResults(results);
 
     // Update job notify count
     if ((window as any).updateJobNotifyCount && results.success.length > 0) {
