@@ -1,11 +1,12 @@
 [build]
   publish = "dist"
-  command = "npm install && npm run build"
+  command = "npm ci && npm run build"
   functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "22"
   NPM_CONFIG_PRODUCTION = "false"
+  CI = "true"
 
 # Build optimizations
 [build.processing]

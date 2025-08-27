@@ -14,6 +14,12 @@ export const handler: Handler = async (event) => {
 
   try {
     console.log('Push function called');
+    console.log('Environment check:', {
+      hasToken: !!process.env.LINE_CHANNEL_ACCESS_TOKEN,
+      tokenLength: process.env.LINE_CHANNEL_ACCESS_TOKEN?.length || 0,
+      hasSecret: !!process.env.LINE_CHANNEL_SECRET,
+      nodeEnv: process.env.NODE_ENV
+    });
     
     if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
       console.error('LINE_CHANNEL_ACCESS_TOKEN not configured');
