@@ -12,11 +12,8 @@ command = "npm install && npm run build"
 functions = "/Users/satonodoka/Desktop/shokuninboshu/shokuninboshu-app/netlify/functions"
 
 [build.environment]
-NODE_VERSION = "20.11.0"
-NODE_OPTIONS = "--max_old_space_size=4096"
+NODE_VERSION = "22"
 NPM_CONFIG_PRODUCTION = "false"
-CI = "true"
-TZ = "UTC"
 NODE_ENV = "production"
 
 [build.processing]
@@ -36,6 +33,12 @@ bundle = true
 minify = true
 
 [build.services]
+
+[dev]
+command = "npm run dev"
+targetPort = 5175.0
+port = 8888.0
+autoLaunch = true
 
 [functions]
 
@@ -82,18 +85,7 @@ for = "/*"
 X-Frame-Options = "DENY"
 X-Content-Type-Options = "nosniff"
 Referrer-Policy = "strict-origin-when-cross-origin"
-
-[[redirects]]
-from = "/404"
-to = "/index.html"
-status = 200.0
-force = false
-
-[redirects.query]
-
-[redirects.conditions]
-
-[redirects.headers]
+X-XSS-Protection = "1; mode=block"
 
 [[redirects]]
 from = "/*"
