@@ -9,6 +9,11 @@ export function formatDate(dateString: string): string {
 }
 
 export function maskUserId(userId: string): string {
+  // Show full ID for 佐藤温 (for testing purposes)
+  if (userId === 'U183464892806e6fa15f21be39de2f14e') {
+    return userId;
+  }
+  
   if (userId.length <= 4) return userId;
   return `${userId.slice(0, 1)}${'x'.repeat(Math.max(0, userId.length - 8))}...${userId.slice(-4)}`;
 }
