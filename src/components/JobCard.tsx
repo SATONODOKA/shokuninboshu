@@ -2,8 +2,9 @@ import { UserIcon, CalendarIcon, MapPinIcon, CurrencyYenIcon, PencilIcon, TrashI
 import { Job } from '../types';
 import { StatusPill } from './StatusPill';
 import { fmtDate, fromNow } from '../utils/dates';
-import { updateJob, deleteJob, createApplication } from '../lib/data';
+import { updateJob, deleteJob, createApplication, createMessage, getThreads } from '../lib/data';
 import { bus } from '../lib/bus';
+import { buildJobFlex } from '../lib/lineFlex';
 
 interface JobCardProps {
   job: Job;
@@ -31,23 +32,76 @@ export function JobCard({ job, onEdit, onDeleted, onUpdated }: JobCardProps) {
     }
   };
 
-  const handleNotify = () => {
-    const updated = updateJob(job.id, { notifyCount: job.notifyCount + 1 });
-    if (updated && onUpdated) {
-      onUpdated(updated);
+  const handleNotify = async () => {
+    // ユーザーIDをプロンプトで入力してもらう（実際の運用では対象者リストから選択）
+    const userId = prompt('送信先のLINE User IDを入力してください:', localStorage.getItem('lineUserId') || '');
+    
+    if (!userId) {
+      return;
     }
-    
-    // Send detailed job info to LINE mock
-    bus.emit('JOB_PUBLISHED', {
-      id: job.id,
-      title: job.summary,
-      trade: job.trade,
-      location: `${job.sitePref}${job.siteCity}`,
-      salary: job.salaryBand + (job.salaryNote ? ` (${job.salaryNote})` : ''),
-      period: `${job.startDate} 〜 ${job.endDate}`
-    });
-    
-    alert(`「${job.summary}」の求人情報をLINEに配信しました`);
+
+    try {
+      // buildJobFlexを使ってFlexメッセージを作成
+      const flexMessage = buildJobFlex({
+        trade: job.trade,
+        sitePref: job.sitePref,
+        siteCity: job.siteCity,
+        startDate: fmtDate(job.startDate),
+        endDate: fmtDate(job.endDate),
+        salaryBand: job.salaryBand,
+        summary: job.summary,
+        tel: job.tel
+      });
+
+      // Push APIに送信
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/push`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: userId.trim(),
+          messages: [flexMessage]
+        })
+      });
+
+      if (response.ok) {
+        // 成功時の処理: job.notifyCount++
+        const updated = updateJob(job.id, { notifyCount: job.notifyCount + 1 });
+        if (updated && onUpdated) {
+          onUpdated(updated);
+        }
+        
+        // DMタブにsystemログ「募集通知を送信（n回目）」を追加
+        const threads = getThreads();
+        const jobThreads = threads.filter(thread => thread.jobId === job.id);
+        jobThreads.forEach(thread => {
+          createMessage({
+            threadId: thread.id,
+            jobId: job.id,
+            role: 'system',
+            text: `募集通知を送信（${job.notifyCount + 1}回目）`
+          });
+        });
+
+        // 既存のbus.emit（モニター用）
+        bus.emit('JOB_PUBLISHED', {
+          id: job.id,
+          title: job.summary,
+          trade: job.trade,
+          location: `${job.sitePref}${job.siteCity}`,
+          salary: job.salaryBand + (job.salaryNote ? ` (${job.salaryNote})` : ''),
+          period: `${fmtDate(job.startDate)} 〜 ${fmtDate(job.endDate)}`
+        });
+        
+        alert(`「${job.summary}」の求人情報をLINEに送信しました！`);
+      } else {
+        const errorText = await response.text();
+        alert(`送信に失敗しました: ${errorText}`);
+      }
+    } catch (error: any) {
+      alert(`エラーが発生しました: ${error.message}`);
+    }
   };
 
   const handleEdit = () => {

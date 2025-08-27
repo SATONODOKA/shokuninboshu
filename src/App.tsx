@@ -12,6 +12,9 @@ import { DmThreadView } from './components/DmThreadView';
 import { getJobs, getThreads } from './lib/data';
 import { useRouter } from './lib/router';
 import { bus } from './lib/bus';
+import Liff from './pages/Liff';
+import EnvCheck from './pages/EnvCheck';
+import { LineSendTestModal } from './components/LineSendTestModal';
 
 function App() {
   const { path, navigate } = useRouter();
@@ -23,6 +26,7 @@ function App() {
   const [notifications, setNotifications] = useState<string[]>([]);
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
   const [isMonitorMode, setIsMonitorMode] = useState(false);
+  const [showLineSendTest, setShowLineSendTest] = useState(false);
 
   useEffect(() => {
     // Check URL parameters for monitor mode - client-side only
@@ -75,6 +79,16 @@ function App() {
     return <Monitor />;
   }
 
+  // If we're on the liff route, show the liff page
+  if (path === '/liff') {
+    return <Liff />;
+  }
+
+  // If we're on the env-check route, show the env check page
+  if (path === '/env-check') {
+    return <EnvCheck />;
+  }
+
   const handleJobCreated = (newJob: Job) => {
     setJobs(prev => [...prev, newJob]);
   };
@@ -120,6 +134,12 @@ function App() {
               >
                 <ComputerDesktopIcon className="h-5 w-5 text-white" />
                 モニターを開く
+              </button>
+              <button 
+                onClick={() => setShowLineSendTest(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-sm"
+              >
+                📱 LINE送信
               </button>
               <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
                 <BellIcon className="h-5 w-5 text-gray-600" />
@@ -219,6 +239,11 @@ function App() {
             onJobUpdated={handleJobUpdated}
           />
         )}
+
+        <LineSendTestModal 
+          isOpen={showLineSendTest}
+          onClose={() => setShowLineSendTest(false)}
+        />
       </div>
 
       {/* Notification Toast */}

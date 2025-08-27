@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export type Route = '/' | '/monitor';
+export type Route = '/' | '/monitor' | '/liff' | '/env-check';
 
 class SimpleRouter {
   private listeners: (() => void)[] = [];
@@ -15,7 +15,10 @@ class SimpleRouter {
 
   private getPathFromUrl(): Route {
     const path = window.location.pathname;
-    return path === '/monitor' ? '/monitor' : '/';
+    if (path === '/monitor') return '/monitor';
+    if (path === '/liff') return '/liff';
+    if (path === '/env-check') return '/env-check';
+    return '/';
   }
 
   private handlePopState = () => {

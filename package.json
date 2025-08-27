@@ -8,6 +8,10 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "setup:env": "cp -n .env.example .env || true",
+    "netlify:dev": "netlify dev",
+    "netlify:env:list": "netlify env:list",
+    "netlify:env:sync": "bash scripts/setup-netlify-env.sh",
     "heroku-postbuild": "npm run build"
   },
   "dependencies": {
