@@ -30,6 +30,8 @@ export default function CandidateList() {
     setJob(foundJob || null);
     
     // Load workers
+    console.log('Available workers:', mockWorkers.length);
+    console.log('佐藤温 found:', mockWorkers.find(w => w.name === '佐藤温'));
     setWorkers(mockWorkers);
     setFilteredWorkers(mockWorkers);
   }, [jobId]);

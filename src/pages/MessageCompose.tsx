@@ -65,25 +65,35 @@ export default function MessageCompose() {
     // Send to each selected worker
     for (const worker of selectedWorkers) {
       try {
+        console.log(`Sending LINE message to ${worker.name} (${worker.id})`);
+        
+        const payload = {
+          to: worker.id, // worker.id is LINE userId
+          messages: [
+            { type: 'text', text: message.trim() },
+            flexMessage
+          ]
+        };
+        
+        console.log('Payload:', JSON.stringify(payload, null, 2));
+
         const response = await fetch(`${apiUrl}/push`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: worker.id, // Assuming worker.id is LINE userId
-            messages: [
-              { type: 'text', text: message.trim() },
-              flexMessage
-            ]
-          })
+          body: JSON.stringify(payload)
         });
+
+        const responseText = await response.text();
+        console.log(`Response for ${worker.name}:`, response.status, responseText);
 
         if (response.ok) {
           results.success.push(worker.name);
+          console.log(`✅ Successfully sent to ${worker.name}`);
         } else {
-          throw new Error(`HTTP ${response.status}`);
+          throw new Error(`HTTP ${response.status}: ${responseText}`);
         }
       } catch (error) {
-        console.error(`Failed to send to ${worker.name}:`, error);
+        console.error(`❌ Failed to send to ${worker.name}:`, error);
         results.failed.push(worker.name);
       }
     }

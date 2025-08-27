@@ -200,5 +200,13 @@ export const mockWorkers: Worker[] = [
     pref: '神奈川',
     city: '厚木市',
     lastSeenAt: '2025-08-26T09:15:00Z'
+  },
+  {
+    id: 'U183464892806e6fa15f21be39de2f14e',
+    name: '佐藤温',
+    trade: '大工',
+    pref: '東京',
+    city: '品川区',
+    lastSeenAt: '2025-08-27T10:00:00Z'
   }
 ];

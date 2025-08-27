@@ -13,7 +13,10 @@ export const handler: Handler = async (event) => {
   }
 
   try {
+    console.log('Push function called');
+    
     if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+      console.error('LINE_CHANNEL_ACCESS_TOKEN not configured');
       return {
         statusCode: 500,
         headers,
@@ -22,13 +25,19 @@ export const handler: Handler = async (event) => {
     }
 
     const { to, messages } = JSON.parse(event.body || '{}');
+    console.log('Request payload:', { to, messagesCount: messages?.length });
+    
     if (!to || !Array.isArray(messages)) {
+      console.error('Invalid payload:', { to, messages: Array.isArray(messages) });
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ error: 'Invalid payload: to and messages required' })
       };
     }
+
+    console.log(`Sending LINE message to: ${to}`);
+    console.log(`Messages: ${JSON.stringify(messages, null, 2)}`);
 
     const res = await fetch('https://api.line.me/v2/bot/message/push', {
       method: 'POST',
@@ -40,6 +49,7 @@ export const handler: Handler = async (event) => {
     });
 
     const text = await res.text();
+    console.log(`LINE API Response: ${res.status} - ${text}`);
     
     return {
       statusCode: res.status,
