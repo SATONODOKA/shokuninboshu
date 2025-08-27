@@ -1,12 +1,16 @@
 [build]
   publish = "dist"
-  command = "npm run build"
+  command = "npm ci && npm run build"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "22"
   NODE_OPTIONS = "--max_old_space_size=4096"
+  NPM_CONFIG_PRODUCTION = "false"
+  CI = "true"
   # Avoid timezone issues
   TZ = "UTC"
+  # Ensure TypeScript compilation
+  NODE_ENV = "production"
 
 # Build optimizations
 [build.processing]
@@ -23,26 +27,20 @@
 [build.processing.html]
   pretty_urls = true
 
-# Error pages
-[[redirects]]
-  from = "/404"
-  to = "/index.html"
-  status = 200
-
+# SPA routing - redirect all routes to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Security headers - using _headers file instead for better control
-# but keeping some basic ones here as fallback
-
+# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    X-XSS-Protection = "1; mode=block"
 
 # Edge processing for faster builds
 [context.production]
