@@ -78,8 +78,21 @@ export default function JobList() {
         <header className="mb-8">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">求人一覧</h1>
-              <p className="text-gray-600">募集中の案件一覧です。「職人を募集」ボタンから候補者に連絡できます。</p>
+              <div className="flex items-center gap-6 mb-4">
+                <h1 className="text-3xl font-bold text-gray-800">求人管理</h1>
+                <nav className="flex gap-4">
+                  <button className="text-teal-600 border-b-2 border-teal-600 pb-1 font-medium">
+                    募集中
+                  </button>
+                  <button 
+                    onClick={() => navigate('/jobs/completed')}
+                    className="text-gray-500 hover:text-gray-700 pb-1 font-medium"
+                  >
+                    完了済み
+                  </button>
+                </nav>
+              </div>
+              <p className="text-gray-600">募集中の案件一覧です。「募集」ボタンから候補者に連絡できます。</p>
             </div>
             <button
               onClick={handleCreateNew}
@@ -94,7 +107,7 @@ export default function JobList() {
         </header>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {jobs.map(job => (
+          {jobs.filter(job => job.status !== 'COMPLETED').map(job => (
             <div key={job.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative">
               {/* Publication status badge in top-left corner */}
               <div className="absolute top-4 left-4">
@@ -200,7 +213,7 @@ export default function JobList() {
           ))}
         </div>
 
-        {jobs.length === 0 && (
+        {jobs.filter(job => job.status !== 'COMPLETED').length === 0 && (
           <div className="text-center py-16">
             <div className="text-gray-400 mb-6">
               <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
