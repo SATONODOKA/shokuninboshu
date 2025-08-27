@@ -155,17 +155,9 @@ export default function JobList() {
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-2">
-                {job.status === 'OPEN' && job.isPublished && (
-                  <button
-                    onClick={() => handleRecruit(job.id)}
-                    className="w-full bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
-                  >
-                    職人を募集
-                  </button>
-                )}
-                
-                <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-3">
+                {/* Main action buttons row */}
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => handleEdit(job)}
                     className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-3 rounded text-sm transition-colors"
@@ -178,48 +170,24 @@ export default function JobList() {
                   >
                     削除
                   </button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  {job.status !== 'COMPLETED' && (
-                    <button
-                      onClick={() => handleToggleStatus(job.id, job.status === 'OPEN' ? 'PAUSED' : 'OPEN')}
-                      className={`font-medium py-2 px-3 rounded text-sm transition-colors ${
-                        job.status === 'OPEN' 
-                          ? 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700'
-                          : 'bg-green-100 hover:bg-green-200 text-green-700'
-                      }`}
-                    >
-                      {job.status === 'OPEN' ? '一時停止' : '再開'}
-                    </button>
-                  )}
-                  
-                  {job.status !== 'COMPLETED' ? (
-                    <button
-                      onClick={() => handleToggleStatus(job.id, 'COMPLETED')}
-                      className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-3 rounded text-sm transition-colors"
-                    >
-                      完了
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleToggleStatus(job.id, 'OPEN')}
-                      className="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-2 px-3 rounded text-sm transition-colors"
-                    >
-                      再開
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleTogglePublish(job.id)}
+                    className={`font-medium py-2 px-3 rounded text-sm transition-colors ${
+                      job.isPublished 
+                        ? 'bg-red-100 hover:bg-red-200 text-red-700'
+                        : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+                    }`}
+                  >
+                    {job.isPublished ? '非公開' : '公開'}
+                  </button>
                 </div>
 
+                {/* Recruit button */}
                 <button
-                  onClick={() => handleTogglePublish(job.id)}
-                  className={`w-full font-medium py-2 px-4 rounded-lg text-sm transition-colors ${
-                    job.isPublished 
-                      ? 'bg-red-100 hover:bg-red-200 text-red-700'
-                      : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
-                  }`}
+                  onClick={() => handleRecruit(job.id)}
+                  className="w-full bg-teal-500 hover:bg-teal-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
                 >
-                  {job.isPublished ? '非公開にする' : '公開する'}
+                  職人を募集
                 </button>
               </div>
             </div>
@@ -227,14 +195,23 @@ export default function JobList() {
         </div>
 
         {jobs.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
-              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <div className="text-center py-16">
+            <div className="text-gray-400 mb-6">
+              <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">募集中の案件がありません</h3>
-            <p className="text-gray-500">新しい案件を作成してください。</p>
+            <h3 className="text-xl font-medium text-gray-900 mb-3">まだ求人がありません</h3>
+            <p className="text-gray-500 mb-6">右上の「求人を作成」ボタンから最初の求人を作成してください。</p>
+            <button
+              onClick={handleCreateNew}
+              className="inline-flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              求人を作成
+            </button>
           </div>
         )}
       </div>
