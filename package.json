@@ -7,9 +7,17 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:env": "cp -n .env.example .env || true",
+    "netlify:dev": "netlify dev",
+    "netlify:env:list": "netlify env:list",
+    "netlify:env:sync": "bash scripts/setup-netlify-env.sh",
+    "pre-deploy": "bash scripts/pre-deploy-check.sh",
+    "pre-deploy:quick": "bash scripts/pre-deploy-check.sh --skip-build",
+    "heroku-postbuild": "npm run build"
   },
   "dependencies": {
+    "@netlify/functions": "^2.8.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.2"

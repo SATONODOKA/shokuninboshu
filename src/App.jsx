@@ -4,6 +4,7 @@ import JobCreate from './pages/JobCreate';
 import CompletedJobs from './pages/CompletedJobs';
 import CandidateList from './pages/CandidateList';
 import MessageCompose from './pages/MessageCompose';
+import LineSend from './pages/LineSend';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/jobs/completed" element={<CompletedJobs />} />
         <Route path="/recruit/targets" element={<CandidateList />} />
         <Route path="/recruit/compose" element={<MessageCompose />} />
+        <Route path="/line/send" element={<LineSend />} />
       </Routes>
     </Router>
   );
