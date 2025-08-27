@@ -12,10 +12,13 @@
     "netlify:dev": "netlify dev",
     "netlify:env:list": "netlify env:list",
     "netlify:env:sync": "bash scripts/setup-netlify-env.sh",
+    "pre-deploy": "bash scripts/pre-deploy-check.sh",
+    "pre-deploy:quick": "bash scripts/pre-deploy-check.sh --skip-build",
     "heroku-postbuild": "npm run build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@netlify/functions": "^2.8.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "@vitejs/plugin-react": "^5.0.0",

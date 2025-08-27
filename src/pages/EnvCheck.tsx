@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '../lib/router';
+import { validateEnvironmentVariables, getValidationSummary, ENV_CONFIGS } from '../lib/envValidation';
 
 export default function EnvCheck() {
   const { navigate } = useRouter();
@@ -31,23 +32,8 @@ export default function EnvCheck() {
     return '*'.repeat(value.length - 4) + value.slice(-4);
   };
 
-  const envVars = [
-    { 
-      key: 'VITE_LINE_LIFF_ID', 
-      value: import.meta.env.VITE_LINE_LIFF_ID,
-      description: 'LINE LIFF アプリID'
-    },
-    { 
-      key: 'VITE_LINE_CHANNEL_ID', 
-      value: import.meta.env.VITE_LINE_CHANNEL_ID,
-      description: 'LINE チャネルID'
-    },
-    { 
-      key: 'VITE_API_BASE_URL', 
-      value: import.meta.env.VITE_API_BASE_URL,
-      description: 'Netlify Functions ベースURL'
-    }
-  ];
+  const validationSummary = getValidationSummary();
+  const envResults = validationSummary.results;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -56,6 +42,29 @@ export default function EnvCheck() {
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">環境変数チェック</h1>
             <p className="text-gray-600">現在の環境変数とNetlify Functionsの状態を確認できます</p>
+            
+            {/* Validation Summary */}
+            <div className={`mt-4 p-4 rounded-lg border ${
+              validationSummary.isValid 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <div className="flex items-center">
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                  validationSummary.isValid
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {validationSummary.isValid ? '設定OK' : 'エラーあり'}
+                </span>
+                <span className="ml-2 text-sm">
+                  {validationSummary.errors.length > 0 && 
+                    `${validationSummary.errors.length}個のエラー`}
+                  {validationSummary.hasWarnings && 
+                    ` (${validationSummary.warnings.length}個の警告)`}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* フロントエンド環境変数 */}
@@ -80,28 +89,35 @@ export default function EnvCheck() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {envVars.map((env) => (
-                    <tr key={env.key}>
+                  {envResults.map((result) => {
+                    const config = ENV_CONFIGS.find(c => c.key === result.key)!;
+                    return (
+                    <tr key={result.key}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                        {env.key}
+                        {result.key}
+                        {result.isRequired && <span className="text-red-500 ml-1">*</span>}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
-                        {env.value ? maskValue(env.value) : '(未設定)'}
+                        {result.value ? maskValue(result.value) : '(未設定)'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {env.description}
+                        {config.description}
+                        {result.error && (
+                          <div className="text-red-500 text-xs mt-1">{result.error}</div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          env.value 
+                          result.isValid 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {env.value ? '設定済み' : '未設定'}
+                          {result.isValid ? '正常' : 'エラー'}
                         </span>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -1,15 +1,18 @@
 [build]
   publish = "dist"
-  command = "npm install && npm run build"
+  command = "npm ci && npm run build"
   functions = "netlify/functions"
+  node_bundler = "esbuild"
 
 [build.environment]
-  NODE_VERSION = "20.11.0"
+  NODE_VERSION = "22"
   NODE_OPTIONS = "--max_old_space_size=4096"
   NPM_CONFIG_PRODUCTION = "false"
   CI = "true"
   # Avoid timezone issues
   TZ = "UTC"
+  # Ensure TypeScript compilation
+  NODE_ENV = "production"
 
 # Build optimizations
 [build.processing]
