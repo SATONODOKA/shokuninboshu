@@ -37,6 +37,13 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-XSS-Protection = "1; mode=block"
 
+# Development settings
+[dev]
+  command = "npm run dev"
+  targetPort = 5175
+  port = 8888
+  autoLaunch = true
+
 # Edge processing for faster builds
 [context.production]
   environment = { NODE_ENV = "production" }
