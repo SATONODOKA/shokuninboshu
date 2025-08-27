@@ -96,6 +96,17 @@ export default function JobList() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {jobs.map(job => (
             <div key={job.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 relative">
+              {/* Publication status badge in top-left corner */}
+              <div className="absolute top-4 left-4">
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                  job.isPublished 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {job.isPublished ? '公開中' : '非公開'}
+                </span>
+              </div>
+
               {/* Edit and Delete buttons in top-right corner */}
               <div className="absolute top-4 right-4 flex gap-1">
                 <button
@@ -119,7 +130,7 @@ export default function JobList() {
               </div>
 
               {/* Job Title */}
-              <div className="mb-4">
+              <div className="mb-4 mt-8">
                 <h3 className="text-xl font-bold text-gray-800 mb-2">{job.title}</h3>
                 <div className="text-sm text-gray-600 space-y-1">
                   <div>{formatDate(job.startDate)} 〜 {formatDate(job.endDate)}</div>
@@ -161,22 +172,28 @@ export default function JobList() {
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleRecruit(job.id)}
-                  className="bg-teal-500 hover:bg-teal-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
-                >
-                  職人を募集
-                </button>
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => handleTogglePublish(job.id)}
-                  className={`font-medium py-3 px-4 rounded-lg transition-colors ${
+                  className={`font-medium py-2 px-3 rounded text-sm transition-colors ${
                     job.isPublished 
                       ? 'bg-red-100 hover:bg-red-200 text-red-700'
                       : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
                   }`}
                 >
-                  {job.isPublished ? '非公開にする' : '公開する'}
+                  {job.isPublished ? '非公開' : '公開'}
+                </button>
+                <button
+                  onClick={() => handleRecruit(job.id)}
+                  className="bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-3 rounded text-sm transition-colors"
+                >
+                  募集
+                </button>
+                <button
+                  onClick={() => handleToggleStatus(job.id, 'COMPLETED')}
+                  className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-3 rounded text-sm transition-colors"
+                >
+                  完了
                 </button>
               </div>
             </div>
