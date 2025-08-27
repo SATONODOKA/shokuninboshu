@@ -1,0 +1,74 @@
+import { Job } from '../types';
+
+export const mockJobs: Job[] = [
+  {
+    id: 'job-001',
+    title: '【大工】相模原 2名',
+    trade: '大工',
+    pref: '神奈川',
+    city: '相模原市',
+    startDate: '2025-08-30',
+    endDate: '2025-09-06',
+    salaryBand: '2〜4万円/日',
+    need: 2,
+    decided: 0,
+    summary: '新築住宅の建築工事です。経験者歓迎。',
+    notifyCount: 3
+  },
+  {
+    id: 'job-002',
+    title: '【電気】新宿 1名',
+    trade: '電気',
+    pref: '東京',
+    city: '新宿区',
+    startDate: '2025-09-01',
+    endDate: '2025-09-15',
+    salaryBand: '3〜5万円/日',
+    need: 1,
+    decided: 0,
+    summary: 'オフィスビルの電気設備工事を担当していただきます。',
+    notifyCount: 1
+  },
+  {
+    id: 'job-003',
+    title: '【左官】浦安 3名',
+    trade: '左官',
+    pref: '千葉',
+    city: '浦安市',
+    startDate: '2025-09-10',
+    endDate: '2025-09-20',
+    salaryBand: '2.5〜3.5万円/日',
+    need: 3,
+    decided: 1,
+    summary: 'マンションの左官工事です。丁寧な作業ができる方を募集。',
+    notifyCount: 5
+  },
+  {
+    id: 'job-004',
+    title: '【大工】川口 4名',
+    trade: '大工',
+    pref: '埼玉',
+    city: '川口市',
+    startDate: '2025-08-28',
+    endDate: '2025-09-10',
+    salaryBand: '2.8〜4.2万円/日',
+    need: 4,
+    decided: 2,
+    summary: '戸建て住宅の増築工事。チームワークを重視します。',
+    notifyCount: 7
+  },
+  {
+    id: 'job-005',
+    title: '【電気】品川 2名',
+    trade: '電気',
+    pref: '東京',
+    city: '品川区',
+    startDate: '2025-09-05',
+    endDate: '2025-09-12',
+    salaryBand: '3.5〜5.5万円/日',
+    need: 2,
+    decided: 0,
+    summary: '商業施設の照明設備工事を行います。',
+    notifyCount: 2
+  }
+];
