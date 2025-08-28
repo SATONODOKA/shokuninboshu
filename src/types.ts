@@ -1,5 +1,5 @@
 export type Trade = '大工' | '電気' | '左官';
-export type Pref = '東京' | '神奈川' | '千葉' | '埼玉';
+export type Pref = '東京' | '神奈川' | '埼玉';
 
 export type JobStatus = 'OPEN' | 'PAUSED' | 'COMPLETED';
 

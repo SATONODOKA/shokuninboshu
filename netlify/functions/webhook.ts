@@ -42,17 +42,23 @@ let firebaseApp: any = null;
 let db: any = null;
 
 // User profile collection states
-type ProfileStep = 'name' | 'trade' | 'location' | 'completed';
+type ProfileStep = 'name' | 'trade' | 'prefecture' | 'city' | 'completed';
 
 // Available trades (simplified to 3 main categories)
 const TRADES = [
-  '大工', '左官', '電気工事'
+  '大工', '左官', '電気'
 ];
 
-// Available prefectures (simplified to 3 main areas)
+// Available prefectures and cities
 const PREFECTURES = [
-  '東京都', '神奈川県', '埼玉県'
+  '東京', '神奈川', '埼玉'
 ];
+
+const CITIES_MAP = {
+  東京: ['新宿区', '渋谷区', '港区', '世田谷区', '杉並区', '練馬区', '足立区', '江戸川区'],
+  神奈川: ['横浜市', '川崎市', '相模原市', '横須賀市', '藤沢市', '茅ヶ崎市', '厚木市', '小田原市'],
+  埼玉: ['さいたま市', '川口市', '所沢市', '越谷市', '草加市', '春日部市', '熊谷市', '川越市']
+};
 
 // Store user profile collection state (in production, use Redis or similar)
 const userProfiles: Record<string, {
@@ -60,6 +66,7 @@ const userProfiles: Record<string, {
   name?: string;
   trade?: string;
   pref?: string;
+  city?: string;
 }> = {};
 
 function initFirebase() {
@@ -273,7 +280,10 @@ async function handlePostback(userId: string, postback: any) {
     await handleTradeSelection(userId, trade);
   } else if (data.startsWith('pref_')) {
     const pref = data.replace('pref_', '');
-    await handleLocationSelection(userId, pref);
+    await handlePrefectureSelection(userId, pref);
+  } else if (data.startsWith('city_')) {
+    const city = data.replace('city_', '');
+    await handleCitySelection(userId, city);
   }
 }
 
@@ -331,7 +341,7 @@ async function handleTradeSelection(userId: string, trade: string) {
     
     // Store trade
     profile.trade = trade;
-    profile.step = 'location';
+    profile.step = 'prefecture';
     
     console.log('Updated profile after trade selection:', profile);
     
@@ -343,33 +353,67 @@ async function handleTradeSelection(userId: string, trade: string) {
     
     console.log('Trade updated in Firestore, sending location selection...');
     
-    // Send location selection message
-    await sendLocationSelectionMessage(userId);
+    // Send prefecture selection message
+    await sendPrefectureSelectionMessage(userId);
     
   } catch (error) {
     console.error('Error handling trade selection:', error);
   }
 }
 
-// Handle location selection from postback
-async function handleLocationSelection(userId: string, pref: string) {
-  console.log('handleLocationSelection called:', userId, pref);
+// Handle prefecture selection from postback
+async function handlePrefectureSelection(userId: string, pref: string) {
+  console.log('handlePrefectureSelection called:', userId, pref);
   
   const profile = userProfiles[userId];
-  if (!profile || profile.step !== 'location') {
-    console.log('Invalid profile or step for location selection:', profile?.step);
+  if (!profile || profile.step !== 'prefecture') {
+    console.log('Invalid profile or step for prefecture selection:', profile?.step);
     return;
   }
   
   try {
+    const firestore = initFirebase();
+    const workerRef = doc(firestore, 'workers', userId);
+    
+    // Store prefecture
     profile.pref = pref;
-    console.log('Updated profile after location selection:', profile);
+    profile.step = 'city';
+    
+    console.log('Updated profile after prefecture selection:', profile);
+    
+    // Update Firestore
+    await updateDoc(workerRef, {
+      pref: profile.pref,
+      updatedAt: Timestamp.now()
+    });
+    
+    // Send city selection message
+    await sendCitySelectionMessage(userId, pref);
+    
+  } catch (error) {
+    console.error('Error handling prefecture selection:', error);
+  }
+}
+
+// Handle city selection from postback
+async function handleCitySelection(userId: string, city: string) {
+  console.log('handleCitySelection called:', userId, city);
+  
+  const profile = userProfiles[userId];
+  if (!profile || profile.step !== 'city') {
+    console.log('Invalid profile or step for city selection:', profile?.step);
+    return;
+  }
+  
+  try {
+    profile.city = city;
+    console.log('Updated profile after city selection:', profile);
     
     // Complete profile
     await completeProfile(userId);
     
   } catch (error) {
-    console.error('Error handling location selection:', error);
+    console.error('Error handling city selection:', error);
   }
 }
 
@@ -387,6 +431,7 @@ async function completeProfile(userId: string) {
       name: profile.name,
       trade: profile.trade,
       pref: profile.pref,
+      city: profile.city,
       status: 'active', // Change from 'pending' to 'active'
       updatedAt: Timestamp.now()
     });
@@ -438,13 +483,13 @@ async function sendTradeSelectionMessage(userId: string) {
             ]
           },
           {
-            text: '電気工事',
-            title: '電気工事',
+            text: '電気',
+            title: '電気',
             actions: [
               {
                 type: 'postback',
-                label: '電気工事を選択',
-                data: 'trade_電気工事'
+                label: '電気を選択',
+                data: 'trade_電気'
               }
             ]
           }
@@ -459,8 +504,8 @@ async function sendTradeSelectionMessage(userId: string) {
   }
 }
 
-// Send location selection message with quick reply
-async function sendLocationSelectionMessage(userId: string) {
+// Send prefecture selection message with quick reply
+async function sendPrefectureSelectionMessage(userId: string) {
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
   
   try {
@@ -484,7 +529,42 @@ async function sendLocationSelectionMessage(userId: string) {
     await sendMessage(userId, [message]);
     
   } catch (error) {
-    console.error('Error sending location selection:', error);
+    console.error('Error sending prefecture selection:', error);
+  }
+}
+
+// Send city selection message with quick reply
+async function sendCitySelectionMessage(userId: string, prefecture: string) {
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
+  
+  try {
+    const cities = CITIES_MAP[prefecture as keyof typeof CITIES_MAP];
+    if (!cities) {
+      console.error('No cities found for prefecture:', prefecture);
+      return;
+    }
+    
+    const quickReply = {
+      items: cities.map(city => ({
+        type: 'action',
+        action: {
+          type: 'postback',
+          label: city,
+          data: `city_${city}`
+        }
+      }))
+    };
+    
+    const message = {
+      type: 'text',
+      text: `${prefecture}の市区町村を選んでください。`,
+      quickReply
+    };
+    
+    await sendMessage(userId, [message]);
+    
+  } catch (error) {
+    console.error('Error sending city selection:', error);
   }
 }
 
@@ -495,7 +575,7 @@ async function sendProfileCompletionMessage(userId: string, profile: any) {
   try {
     const message = {
       type: 'text',
-      text: `プロフィール設定が完了しました！\n\nお名前: ${profile.name}\n得意分野: ${profile.trade}\n活動地域: ${profile.pref}\n\n今後、あなたに最適な求人情報をお送りいたします。`
+      text: `プロフィール設定が完了しました！\n\nお名前: ${profile.name}\n得意分野: ${profile.trade}\n活動地域: ${profile.pref} ${profile.city}\n\n今後、あなたに最適な求人情報をお送りいたします。`
     };
     
     await sendMessage(userId, [message]);

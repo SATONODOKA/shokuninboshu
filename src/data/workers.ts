@@ -21,8 +21,8 @@ export const mockWorkers: Worker[] = [
     id: 'U34567890123456789012cdef',
     name: '鈴木三郎',
     trade: '電気',
-    pref: '千葉',
-    city: '浦安市',
+    pref: '埼玉',
+    city: 'さいたま市',
     lastSeenAt: '2025-08-26T09:45:00Z'
   },
   {
@@ -53,8 +53,8 @@ export const mockWorkers: Worker[] = [
     id: 'U78901234567890123456012a',
     name: '渡辺七郎',
     trade: '左官',
-    pref: '千葉',
-    city: '千葉市',
+    pref: '神奈川',
+    city: '横浜市',
     lastSeenAt: '2025-08-24T08:45:00Z'
   },
   {
@@ -85,8 +85,8 @@ export const mockWorkers: Worker[] = [
     id: 'U12345678901234567890456e',
     name: '中村十一郎',
     trade: '大工',
-    pref: '千葉',
-    city: '船橋市',
+    pref: '東京',
+    city: '世田谷区',
     lastSeenAt: '2025-08-25T15:40:00Z'
   },
   {
@@ -117,8 +117,8 @@ export const mockWorkers: Worker[] = [
     id: 'U56789012345678901234890c',
     name: '林十五郎',
     trade: '電気',
-    pref: '千葉',
-    city: '市川市',
+    pref: '神奈川',
+    city: '川崎市',
     lastSeenAt: '2025-08-23T13:25:00Z'
   },
   {
@@ -149,8 +149,8 @@ export const mockWorkers: Worker[] = [
     id: 'U90123456789012345678234a',
     name: '池田十九郎',
     trade: '左官',
-    pref: '千葉',
-    city: '柏市',
+    pref: '埼玉',
+    city: '川口市',
     lastSeenAt: '2025-08-24T15:15:00Z'
   },
   {
@@ -181,8 +181,8 @@ export const mockWorkers: Worker[] = [
     id: 'U34567890123456789012678e',
     name: '前田二十三郎',
     trade: '大工',
-    pref: '千葉',
-    city: '松戸市',
+    pref: '東京',
+    city: '渋谷区',
     lastSeenAt: '2025-08-24T12:05:00Z'
   },
   {
