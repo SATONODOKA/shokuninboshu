@@ -42,27 +42,17 @@ export default function CandidateList() {
     
     // Set up Firestore real-time subscription
     unsubscribe = subscribeToWorkers((firestoreWorkers) => {
-      if (firestoreWorkers.length > 0) {
-        console.log('Using Firestore workers:', firestoreWorkers.length);
-        setWorkers(firestoreWorkers);
-        setFilteredWorkers(firestoreWorkers);
-        setIsUsingFirestore(true);
-      } else {
-        // Fallback to localStorage if no Firestore workers
-        const localWorkers = getWorkersFromLocalStorage();
-        console.log('Fallback to local workers:', localWorkers.length);
-        setWorkers(localWorkers);
-        setFilteredWorkers(localWorkers);
-        setIsUsingFirestore(false);
-      }
+      console.log('Firestore workers received:', firestoreWorkers.length);
+      setWorkers(firestoreWorkers);
+      setFilteredWorkers(firestoreWorkers);
+      setIsUsingFirestore(true);
     });
     
-    // If Firestore subscription failed, use localStorage immediately
+    // If Firestore subscription failed, show empty state
     if (!unsubscribe) {
-      const localWorkers = getWorkersFromLocalStorage();
-      console.log('Firebase not available, using local workers:', localWorkers.length);
-      setWorkers(localWorkers);
-      setFilteredWorkers(localWorkers);
+      console.log('Firebase not available, showing empty state');
+      setWorkers([]);
+      setFilteredWorkers([]);
       setIsUsingFirestore(false);
     }
 
@@ -430,11 +420,11 @@ export default function CandidateList() {
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
                 <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">該当する候補者がいません</h3>
-              <p className="text-gray-500">フィルター条件を調整してください。</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">まだ候補者がいません</h3>
+              <p className="text-gray-500">LINE友達登録されると候補者がここに表示されます。</p>
             </div>
           )}
         </div>
