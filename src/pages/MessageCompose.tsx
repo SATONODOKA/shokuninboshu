@@ -6,6 +6,7 @@ import { mockWorkers } from '../data/workers';
 import { useSearchParams, generateJobTemplate, countCharacters, maskUserId } from '../utils/helpers';
 import { buildJobFlex } from '../lib/lineFlex';
 import { getWorkersFromLocalStorage } from '../utils/workerSync';
+import { getWorkersOnce } from '../lib/firestoreWorkers';
 
 export default function MessageCompose() {
   const navigate = useNavigate();
@@ -27,10 +28,29 @@ export default function MessageCompose() {
     const foundJob = jobs.find((j: Job) => j.id === jobId) || mockJobs.find(j => j.id === jobId);
     setJob(foundJob || null);
     
-    // Load selected workers using utility function
-    const currentWorkers = getWorkersFromLocalStorage();
-    const workers = currentWorkers.filter((w: Worker) => ids.includes(w.id));
-    setSelectedWorkers(workers);
+    // Load selected workers - try Firestore first, fallback to localStorage
+    const loadWorkers = async () => {
+      try {
+        const firestoreWorkers = await getWorkersOnce();
+        if (firestoreWorkers.length > 0) {
+          const workers = firestoreWorkers.filter(w => ids.includes(w.id));
+          setSelectedWorkers(workers);
+        } else {
+          // Fallback to localStorage
+          const localWorkers = getWorkersFromLocalStorage();
+          const workers = localWorkers.filter((w: Worker) => ids.includes(w.id));
+          setSelectedWorkers(workers);
+        }
+      } catch (error) {
+        console.error('Error loading workers:', error);
+        // Fallback to localStorage on error
+        const localWorkers = getWorkersFromLocalStorage();
+        const workers = localWorkers.filter((w: Worker) => ids.includes(w.id));
+        setSelectedWorkers(workers);
+      }
+    };
+    
+    loadWorkers();
     
     // Generate initial message template
     if (foundJob) {

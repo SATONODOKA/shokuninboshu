@@ -1,5 +1,10 @@
 import type { Handler } from '@netlify/functions';
 import { Worker } from '../../src/types';
+import { WorkerDoc } from '../../src/types/firestore';
+
+// Import Firebase client SDK for serverless functions
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, setDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 
 interface LineEvent {
   type: 'follow' | 'message' | 'unfollow';
@@ -16,6 +21,33 @@ interface LineEvent {
 
 interface WebhookBody {
   events: LineEvent[];
+}
+
+// Firebase configuration for server-side
+const fbConfig = {
+  apiKey: process.env.VITE_FB_API_KEY,
+  authDomain: process.env.VITE_FB_AUTH_DOMAIN,
+  projectId: process.env.VITE_FB_PROJECT_ID,
+  storageBucket: process.env.VITE_FB_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FB_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FB_APP_ID,
+  measurementId: process.env.VITE_FB_MEASUREMENT_ID,
+};
+
+// Initialize Firebase
+let firebaseApp: any = null;
+let db: any = null;
+
+function initFirebase() {
+  if (!firebaseApp) {
+    if (getApps().length > 0) {
+      firebaseApp = getApps()[0];
+    } else {
+      firebaseApp = initializeApp(fbConfig);
+    }
+    db = getFirestore(firebaseApp);
+  }
+  return db;
 }
 
 export const handler: Handler = async (event) => {
@@ -82,25 +114,31 @@ async function handleUserFollow(userId: string) {
   console.log('User followed:', userId);
   
   try {
-    // Create new worker entry
-    const newWorker: Worker = {
-      id: userId,
-      name: `候補者${userId.substring(0, 8)}`, // Temporary name until user provides it
-      trade: '大工', // Default trade, can be updated later
+    // Initialize Firebase
+    const firestore = initFirebase();
+    
+    // Create new worker document for Firestore
+    const workerDoc: WorkerDoc = {
+      lineUid: userId,
+      name: `候補者${userId.substring(-8)}`, // Temporary name
+      trade: '大工', // Default trade
       pref: '東京', // Default prefecture
       city: '品川区', // Default city
-      lastSeenAt: new Date().toISOString()
+      status: 'active',
+      source: 'follow',
+      lastActiveAt: Timestamp.now(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     };
 
-    // Since this is a serverless function, we can't directly update localStorage
-    // The frontend will need to handle this via polling or a separate API
-    console.log('New worker to be added to frontend storage:', newWorker);
+    // Save to Firestore workers collection
+    const workerRef = doc(firestore, 'workers', userId);
+    await setDoc(workerRef, workerDoc);
+    
+    console.log('New worker saved to Firestore:', userId);
 
     // Send welcome message
     await sendWelcomeMessage(userId);
-
-    // Optionally, you could store this in an external database like Supabase, 
-    // Firebase, or even a simple external service to sync with frontend
 
   } catch (error) {
     console.error('Error handling user follow:', error);
@@ -110,10 +148,18 @@ async function handleUserFollow(userId: string) {
 async function handleUserMessage(userId: string, message: any) {
   console.log('User message:', userId, message);
   
-  // Update last seen timestamp
   try {
-    // In a real implementation, update the worker's lastSeenAt in database
-    console.log('Updated lastSeenAt for user:', userId);
+    // Initialize Firebase
+    const firestore = initFirebase();
+    
+    // Update last active timestamp in Firestore
+    const workerRef = doc(firestore, 'workers', userId);
+    await updateDoc(workerRef, {
+      lastActiveAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+    
+    console.log('Updated lastActiveAt for user:', userId);
     
     // Handle specific message types if needed
     if (message?.type === 'text') {
@@ -130,8 +176,14 @@ async function handleUserUnfollow(userId: string) {
   console.log('User unfollowed:', userId);
   
   try {
-    // In a real implementation, mark user as inactive in database
-    console.log('User marked as unfollowed:', userId);
+    // Initialize Firebase
+    const firestore = initFirebase();
+    
+    // Delete user from Firestore (or mark as inactive)
+    const workerRef = doc(firestore, 'workers', userId);
+    await deleteDoc(workerRef);
+    
+    console.log('User removed from Firestore:', userId);
     
   } catch (error) {
     console.error('Error handling user unfollow:', error);

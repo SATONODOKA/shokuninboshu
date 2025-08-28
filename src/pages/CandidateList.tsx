@@ -5,6 +5,7 @@ import { mockJobs } from '../data/jobs';
 import { mockWorkers } from '../data/workers';
 import { useSearchParams, maskUserId, formatLastSeen } from '../utils/helpers';
 import { getWorkersFromLocalStorage, updateWorkerInLocalStorage, removeWorkerFromLocalStorage } from '../utils/workerSync';
+import { subscribeToWorkers, updateWorkerInFirestore, deleteWorkerFromFirestore } from '../lib/firestoreWorkers';
 
 type SortOption = 'name-asc' | 'lastSeen-desc';
 
@@ -20,6 +21,7 @@ export default function CandidateList() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [filteredWorkers, setFilteredWorkers] = useState<Worker[]>([]);
   const [selectedWorkerIds, setSelectedWorkerIds] = useState<Set<string>>(new Set());
+  const [isUsingFirestore, setIsUsingFirestore] = useState(false);
   
   // Filter states
   const [selectedTrades, setSelectedTrades] = useState<Set<Trade>>(new Set());
@@ -35,13 +37,41 @@ export default function CandidateList() {
       setJob(foundJob || null);
     }
     
-    // Load workers using utility function
-    const currentWorkers = getWorkersFromLocalStorage();
+    // Try to use Firestore first, fallback to localStorage
+    let unsubscribe: (() => void) | null = null;
     
-    console.log('Available workers:', currentWorkers.length);
-    console.log('佐藤温 found:', currentWorkers.find((w: Worker) => w.name === '佐藤温'));
-    setWorkers(currentWorkers);
-    setFilteredWorkers(currentWorkers);
+    // Set up Firestore real-time subscription
+    unsubscribe = subscribeToWorkers((firestoreWorkers) => {
+      if (firestoreWorkers.length > 0) {
+        console.log('Using Firestore workers:', firestoreWorkers.length);
+        setWorkers(firestoreWorkers);
+        setFilteredWorkers(firestoreWorkers);
+        setIsUsingFirestore(true);
+      } else {
+        // Fallback to localStorage if no Firestore workers
+        const localWorkers = getWorkersFromLocalStorage();
+        console.log('Fallback to local workers:', localWorkers.length);
+        setWorkers(localWorkers);
+        setFilteredWorkers(localWorkers);
+        setIsUsingFirestore(false);
+      }
+    });
+    
+    // If Firestore subscription failed, use localStorage immediately
+    if (!unsubscribe) {
+      const localWorkers = getWorkersFromLocalStorage();
+      console.log('Firebase not available, using local workers:', localWorkers.length);
+      setWorkers(localWorkers);
+      setFilteredWorkers(localWorkers);
+      setIsUsingFirestore(false);
+    }
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [jobId, isStandalone]);
 
   useEffect(() => {
@@ -126,18 +156,37 @@ export default function CandidateList() {
     }
   };
 
-  const handleEdit = (worker: Worker) => {
+  const handleEdit = async (worker: Worker) => {
     const newName = prompt('名前を編集:', worker.name);
     if (newName && newName.trim() !== worker.name) {
-      const updatedWorkers = updateWorkerInLocalStorage(worker.id, { name: newName.trim() });
-      setWorkers(updatedWorkers);
+      if (isUsingFirestore) {
+        // Update in Firestore (will trigger real-time update)
+        const success = await updateWorkerInFirestore(worker.id, { name: newName.trim() });
+        if (!success) {
+          alert('Firestoreの更新に失敗しました。');
+        }
+      } else {
+        // Fallback to localStorage
+        const updatedWorkers = updateWorkerInLocalStorage(worker.id, { name: newName.trim() });
+        setWorkers(updatedWorkers);
+      }
     }
   };
 
-  const handleDelete = (workerId: string) => {
+  const handleDelete = async (workerId: string) => {
     if (window.confirm('この候補者を削除しますか？')) {
-      const updatedWorkers = removeWorkerFromLocalStorage(workerId);
-      setWorkers(updatedWorkers);
+      if (isUsingFirestore) {
+        // Delete from Firestore (will trigger real-time update)
+        const success = await deleteWorkerFromFirestore(workerId);
+        if (!success) {
+          alert('Firestoreからの削除に失敗しました。');
+        }
+      } else {
+        // Fallback to localStorage
+        const updatedWorkers = removeWorkerFromLocalStorage(workerId);
+        setWorkers(updatedWorkers);
+      }
+      
       // Update selected list if deleted worker was selected
       setSelectedWorkerIds(prev => {
         const newSelected = new Set(prev);
@@ -188,8 +237,19 @@ export default function CandidateList() {
               </div>
             )}
             {isStandalone && (
-              <div className="text-lg text-gray-700">
-                登録された全候補者の管理・閲覧ができます
+              <div className="flex items-center justify-between">
+                <div className="text-lg text-gray-700">
+                  登録された全候補者の管理・閲覧ができます
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    isUsingFirestore 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {isUsingFirestore ? '🔥 Firestore同期' : '💾 ローカル'}
+                  </span>
+                </div>
               </div>
             )}
           </div>
