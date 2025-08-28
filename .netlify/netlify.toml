@@ -1,15 +1,7 @@
-functionsDirectory = "/Users/satonodoka/Desktop/shokuninboshu/shokuninboshu-app/netlify/functions"
-functionsDirectoryOrigin = "config-v1"
-headersOrigin = "config"
-redirectsOrigin = "config"
-plugins = []
-
 [build]
-publish = "/Users/satonodoka/Desktop/shokuninboshu/shokuninboshu-app/dist"
-publishOrigin = "config"
-commandOrigin = "config"
 command = "npm ci && npm run build"
-functions = "/Users/satonodoka/Desktop/shokuninboshu/shokuninboshu-app/netlify/functions"
+functions = "netlify/functions"
+publish = "dist"
 
 [build.environment]
 NODE_VERSION = "22"
