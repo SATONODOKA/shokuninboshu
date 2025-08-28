@@ -26,6 +26,7 @@ export type Worker = {
   trade: Trade;
   pref: Pref;
   city: string;
+  status?: 'active' | 'pending' | 'blocked';
   lastSeenAt?: string;
 };
 

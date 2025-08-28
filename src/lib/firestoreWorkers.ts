@@ -11,6 +11,7 @@ export function convertFirestoreWorkerToLocal(id: string, workerDoc: WorkerDoc):
     trade: (workerDoc.trade as any) || '大工',
     pref: (workerDoc.pref as any) || '東京',
     city: workerDoc.city || '品川区',
+    status: workerDoc.status || 'active',
     lastSeenAt: workerDoc.lastActiveAt?.toDate?.()?.toISOString() || new Date().toISOString(),
   };
 }
@@ -23,6 +24,7 @@ export function convertLocalWorkerToFirestore(worker: Worker): Partial<WorkerDoc
     trade: worker.trade,
     pref: worker.pref,
     city: worker.city,
+    status: worker.status,
     lastActiveAt: worker.lastSeenAt ? Timestamp.fromDate(new Date(worker.lastSeenAt)) : Timestamp.now(),
     updatedAt: Timestamp.now(),
   };

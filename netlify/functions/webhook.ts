@@ -7,7 +7,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, setDoc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 
 interface LineEvent {
-  type: 'follow' | 'message' | 'unfollow';
+  type: 'follow' | 'message' | 'unfollow' | 'postback';
   source?: {
     userId?: string;
     type?: 'user' | 'group' | 'room';
@@ -15,6 +15,9 @@ interface LineEvent {
   message?: {
     type: string;
     text?: string;
+  };
+  postback?: {
+    data: string;
   };
   timestamp: number;
 }
@@ -37,6 +40,30 @@ const fbConfig = {
 // Initialize Firebase
 let firebaseApp: any = null;
 let db: any = null;
+
+// User profile collection states
+type ProfileStep = 'name' | 'trade' | 'location' | 'completed';
+
+// Available trades
+const TRADES = [
+  '大工', '電気工事', '配管・水道', '左官', '塗装', 
+  '屋根工事', '建築板金', '内装', '外構・エクステリア', 'その他'
+];
+
+// Available prefectures (simplified list)
+const PREFECTURES = [
+  '東京都', '神奈川県', '千葉県', '埼玉県', '茨城県', '栃木県', '群馬県',
+  '大阪府', '京都府', '兵庫県', '奈良県', '滋賀県', '和歌山県',
+  '愛知県', '静岡県', '岐阜県', '三重県', 'その他'
+];
+
+// Store user profile collection state (in production, use Redis or similar)
+const userProfiles: Record<string, {
+  step: ProfileStep;
+  name?: string;
+  trade?: string;
+  pref?: string;
+}> = {};
 
 function initFirebase() {
   if (!firebaseApp) {
@@ -105,6 +132,8 @@ async function processEvent(event: LineEvent) {
     await handleUserFollow(event.source.userId);
   } else if (event.type === 'message' && event.source?.userId) {
     await handleUserMessage(event.source.userId, event.message);
+  } else if (event.type === 'postback' && event.source?.userId) {
+    await handlePostback(event.source.userId, event.postback);
   } else if (event.type === 'unfollow' && event.source?.userId) {
     await handleUserUnfollow(event.source.userId);
   }
@@ -117,14 +146,11 @@ async function handleUserFollow(userId: string) {
     // Initialize Firebase
     const firestore = initFirebase();
     
-    // Create new worker document for Firestore
+    // Create new worker document with pending status
     const workerDoc: WorkerDoc = {
       lineUid: userId,
-      name: `候補者${userId.substring(-8)}`, // Temporary name
-      trade: '大工', // Default trade
-      pref: '東京', // Default prefecture
-      city: '品川区', // Default city
-      status: 'active',
+      name: `新規登録者${userId.substring(-8)}`,
+      status: 'pending', // Status will be 'active' after profile completion
       source: 'follow',
       lastActiveAt: Timestamp.now(),
       createdAt: Timestamp.now(),
@@ -137,7 +163,10 @@ async function handleUserFollow(userId: string) {
     
     console.log('New worker saved to Firestore:', userId);
 
-    // Send welcome message
+    // Initialize profile collection process
+    userProfiles[userId] = { step: 'name' };
+    
+    // Send welcome message and start profile collection
     await sendWelcomeMessage(userId);
 
   } catch (error) {
@@ -161,10 +190,12 @@ async function handleUserMessage(userId: string, message: any) {
     
     console.log('Updated lastActiveAt for user:', userId);
     
-    // Handle specific message types if needed
-    if (message?.type === 'text') {
-      console.log('Text message received:', message.text);
-      // Could implement profile update logic here
+    // Handle profile collection process
+    if (message?.type === 'text' && userProfiles[userId]) {
+      await handleProfileCollection(userId, message.text);
+    } else if (message?.type === 'text') {
+      // Regular message handling for completed profiles
+      console.log('Regular text message received:', message.text);
     }
     
   } catch (error) {
@@ -200,7 +231,11 @@ async function sendWelcomeMessage(userId: string) {
     const messages = [
       {
         type: 'text',
-        text: '職人募集アプリにご登録いただきありがとうございます！\n\n今後、あなたのスキルに合った求人情報をお送りいたします。'
+        text: '職人募集アプリにご登録いただきありがとうございます！\n\nあなたに最適な求人情報をお送りするため、簡単なプロフィール設定をお願いします。'
+      },
+      {
+        type: 'text',
+        text: 'まずはお名前（フルネーム）を教えてください。'
       }
     ];
 
@@ -225,5 +260,237 @@ async function sendWelcomeMessage(userId: string) {
 
   } catch (error) {
     console.error('Error sending welcome message:', error);
+  }
+}
+
+// Handle postback events (for quick reply buttons)
+async function handlePostback(userId: string, postback: any) {
+  console.log('Postback received:', userId, postback);
+  
+  if (!postback?.data) return;
+  
+  const data = postback.data;
+  
+  if (data.startsWith('trade_')) {
+    const trade = data.replace('trade_', '');
+    await handleTradeSelection(userId, trade);
+  } else if (data.startsWith('pref_')) {
+    const pref = data.replace('pref_', '');
+    await handleLocationSelection(userId, pref);
+  }
+}
+
+// Handle profile collection step by step
+async function handleProfileCollection(userId: string, text: string) {
+  const profile = userProfiles[userId];
+  if (!profile) return;
+  
+  try {
+    const firestore = initFirebase();
+    const workerRef = doc(firestore, 'workers', userId);
+    
+    switch (profile.step) {
+      case 'name':
+        // Store the name
+        profile.name = text.trim();
+        profile.step = 'trade';
+        
+        // Update Firestore
+        await updateDoc(workerRef, {
+          name: profile.name,
+          updatedAt: Timestamp.now()
+        });
+        
+        // Send trade selection message
+        await sendTradeSelectionMessage(userId);
+        break;
+        
+      case 'location':
+        // Handle location input (fallback for text input)
+        profile.pref = text.trim();
+        
+        // Complete profile
+        await completeProfile(userId);
+        break;
+    }
+  } catch (error) {
+    console.error('Error in profile collection:', error);
+  }
+}
+
+// Handle trade selection from postback
+async function handleTradeSelection(userId: string, trade: string) {
+  const profile = userProfiles[userId];
+  if (!profile || profile.step !== 'trade') return;
+  
+  try {
+    const firestore = initFirebase();
+    const workerRef = doc(firestore, 'workers', userId);
+    
+    // Store trade
+    profile.trade = trade;
+    profile.step = 'location';
+    
+    // Update Firestore
+    await updateDoc(workerRef, {
+      trade: profile.trade,
+      updatedAt: Timestamp.now()
+    });
+    
+    // Send location selection message
+    await sendLocationSelectionMessage(userId);
+    
+  } catch (error) {
+    console.error('Error handling trade selection:', error);
+  }
+}
+
+// Handle location selection from postback
+async function handleLocationSelection(userId: string, pref: string) {
+  const profile = userProfiles[userId];
+  if (!profile || profile.step !== 'location') return;
+  
+  try {
+    profile.pref = pref;
+    
+    // Complete profile
+    await completeProfile(userId);
+    
+  } catch (error) {
+    console.error('Error handling location selection:', error);
+  }
+}
+
+// Complete user profile setup
+async function completeProfile(userId: string) {
+  const profile = userProfiles[userId];
+  if (!profile) return;
+  
+  try {
+    const firestore = initFirebase();
+    const workerRef = doc(firestore, 'workers', userId);
+    
+    // Update Firestore with complete profile
+    await updateDoc(workerRef, {
+      name: profile.name,
+      trade: profile.trade,
+      pref: profile.pref,
+      status: 'active', // Change from 'pending' to 'active'
+      updatedAt: Timestamp.now()
+    });
+    
+    // Clean up profile collection state
+    delete userProfiles[userId];
+    
+    // Send completion message
+    await sendProfileCompletionMessage(userId, profile);
+    
+    console.log('Profile completed for user:', userId, profile);
+    
+  } catch (error) {
+    console.error('Error completing profile:', error);
+  }
+}
+
+// Send trade selection message with quick reply
+async function sendTradeSelectionMessage(userId: string) {
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
+  
+  try {
+    const quickReply = {
+      items: TRADES.map(trade => ({
+        type: 'action',
+        action: {
+          type: 'postback',
+          label: trade,
+          data: `trade_${trade}`
+        }
+      }))
+    };
+    
+    const message = {
+      type: 'text',
+      text: '得意な工事の種類を選んでください。',
+      quickReply
+    };
+    
+    await sendMessage(userId, [message]);
+    
+  } catch (error) {
+    console.error('Error sending trade selection:', error);
+  }
+}
+
+// Send location selection message with quick reply
+async function sendLocationSelectionMessage(userId: string) {
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
+  
+  try {
+    const quickReply = {
+      items: PREFECTURES.map(pref => ({
+        type: 'action',
+        action: {
+          type: 'postback',
+          label: pref,
+          data: `pref_${pref}`
+        }
+      }))
+    };
+    
+    const message = {
+      type: 'text',
+      text: 'お住まいの都道府県を選んでください。',
+      quickReply
+    };
+    
+    await sendMessage(userId, [message]);
+    
+  } catch (error) {
+    console.error('Error sending location selection:', error);
+  }
+}
+
+// Send profile completion message
+async function sendProfileCompletionMessage(userId: string, profile: any) {
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
+  
+  try {
+    const message = {
+      type: 'text',
+      text: `プロフィール設定が完了しました！\n\nお名前: ${profile.name}\n得意分野: ${profile.trade}\n活動地域: ${profile.pref}\n\n今後、あなたに最適な求人情報をお送りいたします。`
+    };
+    
+    await sendMessage(userId, [message]);
+    
+  } catch (error) {
+    console.error('Error sending completion message:', error);
+  }
+}
+
+// Generic message sending helper
+async function sendMessage(userId: string, messages: any[]) {
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
+  
+  try {
+    const response = await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify({
+        to: userId,
+        messages
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Failed to send message:', response.status, errorText);
+    } else {
+      console.log('Message sent successfully to:', userId);
+    }
+  } catch (error) {
+    console.error('Error sending message:', error);
   }
 }
