@@ -5,6 +5,7 @@ import { mockJobs } from '../data/jobs';
 import { mockWorkers } from '../data/workers';
 import { useSearchParams, generateJobTemplate, countCharacters, maskUserId } from '../utils/helpers';
 import { buildJobFlex } from '../lib/lineFlex';
+import { getWorkersFromLocalStorage } from '../utils/workerSync';
 
 export default function MessageCompose() {
   const navigate = useNavigate();
@@ -26,8 +27,9 @@ export default function MessageCompose() {
     const foundJob = jobs.find((j: Job) => j.id === jobId) || mockJobs.find(j => j.id === jobId);
     setJob(foundJob || null);
     
-    // Load selected workers
-    const workers = mockWorkers.filter(w => ids.includes(w.id));
+    // Load selected workers using utility function
+    const currentWorkers = getWorkersFromLocalStorage();
+    const workers = currentWorkers.filter((w: Worker) => ids.includes(w.id));
     setSelectedWorkers(workers);
     
     // Generate initial message template

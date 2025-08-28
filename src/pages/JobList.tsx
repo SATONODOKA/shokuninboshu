@@ -79,20 +79,26 @@ export default function JobList() {
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-6 mb-4">
-                <h1 className="text-3xl font-bold text-gray-800">求人管理</h1>
+                <h1 className="text-3xl font-bold text-gray-800">職人募集管理</h1>
                 <nav className="flex gap-4">
                   <button className="text-teal-600 border-b-2 border-teal-600 pb-1 font-medium">
-                    募集中
+                    求人一覧
+                  </button>
+                  <button 
+                    onClick={() => navigate('/recruit/targets')}
+                    className="text-gray-500 hover:text-gray-700 pb-1 font-medium"
+                  >
+                    候補者リスト
                   </button>
                   <button 
                     onClick={() => navigate('/jobs/completed')}
                     className="text-gray-500 hover:text-gray-700 pb-1 font-medium"
                   >
-                    完了済み
+                    完了済み案件
                   </button>
                 </nav>
               </div>
-              <p className="text-gray-600">募集中の案件一覧です。「募集」ボタンから候補者に連絡できます。</p>
+              <p className="text-gray-600">求人の作成・管理、候補者リスト管理、完了案件の確認ができます。</p>
             </div>
             <button
               onClick={handleCreateNew}

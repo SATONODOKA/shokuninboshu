@@ -8,12 +8,13 @@ plugins = []
 publish = "/Users/satonodoka/Desktop/shokuninboshu/shokuninboshu-app/dist"
 publishOrigin = "config"
 commandOrigin = "config"
-command = "npm install && npm run build"
+command = "npm ci && npm run build"
 functions = "/Users/satonodoka/Desktop/shokuninboshu/shokuninboshu-app/netlify/functions"
 
 [build.environment]
 NODE_VERSION = "22"
 NPM_CONFIG_PRODUCTION = "false"
+CI = "true"
 NODE_ENV = "production"
 
 [build.processing]
@@ -36,7 +37,7 @@ minify = true
 
 [dev]
 command = "npm run dev"
-targetPort = 5175.0
+targetPort = 5174.0
 port = 8888.0
 autoLaunch = true
 

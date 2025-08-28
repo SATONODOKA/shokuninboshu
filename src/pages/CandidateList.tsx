@@ -4,6 +4,7 @@ import { Job, Worker, Trade, Pref } from '../types';
 import { mockJobs } from '../data/jobs';
 import { mockWorkers } from '../data/workers';
 import { useSearchParams, maskUserId, formatLastSeen } from '../utils/helpers';
+import { getWorkersFromLocalStorage, updateWorkerInLocalStorage, removeWorkerFromLocalStorage } from '../utils/workerSync';
 
 type SortOption = 'name-asc' | 'lastSeen-desc';
 
@@ -11,6 +12,9 @@ export default function CandidateList() {
   const navigate = useNavigate();
   const searchParams = useSearchParams();
   const jobId = searchParams.get('jobId');
+  
+  // Check if this is standalone candidate list (no jobId)
+  const isStandalone = !jobId;
   
   const [job, setJob] = useState<Job | null>(null);
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -24,17 +28,21 @@ export default function CandidateList() {
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
 
   useEffect(() => {
-    // Load job data
-    const jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
-    const foundJob = jobs.find((j: Job) => j.id === jobId) || mockJobs.find(j => j.id === jobId);
-    setJob(foundJob || null);
+    if (!isStandalone) {
+      // Load job data when coming from job recruitment flow
+      const jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
+      const foundJob = jobs.find((j: Job) => j.id === jobId) || mockJobs.find(j => j.id === jobId);
+      setJob(foundJob || null);
+    }
     
-    // Load workers
-    console.log('Available workers:', mockWorkers.length);
-    console.log('佐藤温 found:', mockWorkers.find(w => w.name === '佐藤温'));
-    setWorkers(mockWorkers);
-    setFilteredWorkers(mockWorkers);
-  }, [jobId]);
+    // Load workers using utility function
+    const currentWorkers = getWorkersFromLocalStorage();
+    
+    console.log('Available workers:', currentWorkers.length);
+    console.log('佐藤温 found:', currentWorkers.find((w: Worker) => w.name === '佐藤温'));
+    setWorkers(currentWorkers);
+    setFilteredWorkers(currentWorkers);
+  }, [jobId, isStandalone]);
 
   useEffect(() => {
     applyFilters();
@@ -86,7 +94,7 @@ export default function CandidateList() {
   };
 
   const getCitiesForPref = (pref: Pref): string[] => {
-    return Array.from(new Set(mockWorkers.filter(w => w.pref === pref).map(w => w.city))).sort();
+    return Array.from(new Set(workers.filter(w => w.pref === pref).map(w => w.city))).sort();
   };
 
   const toggleWorkerSelection = (workerId: string) => {
@@ -108,11 +116,38 @@ export default function CandidateList() {
   };
 
   const handleNext = () => {
-    const selectedIds = Array.from(selectedWorkerIds).join(',');
-    navigate(`/recruit/compose?jobId=${jobId}&ids=${selectedIds}`);
+    if (isStandalone) {
+      // In standalone mode, show message that job selection is needed
+      alert('候補者にメッセージを送るには、まず求人一覧から案件を選択してください。');
+      navigate('/');
+    } else {
+      const selectedIds = Array.from(selectedWorkerIds).join(',');
+      navigate(`/recruit/compose?jobId=${jobId}&ids=${selectedIds}`);
+    }
   };
 
-  if (!job) {
+  const handleEdit = (worker: Worker) => {
+    const newName = prompt('名前を編集:', worker.name);
+    if (newName && newName.trim() !== worker.name) {
+      const updatedWorkers = updateWorkerInLocalStorage(worker.id, { name: newName.trim() });
+      setWorkers(updatedWorkers);
+    }
+  };
+
+  const handleDelete = (workerId: string) => {
+    if (window.confirm('この候補者を削除しますか？')) {
+      const updatedWorkers = removeWorkerFromLocalStorage(workerId);
+      setWorkers(updatedWorkers);
+      // Update selected list if deleted worker was selected
+      setSelectedWorkerIds(prev => {
+        const newSelected = new Set(prev);
+        newSelected.delete(workerId);
+        return newSelected;
+      });
+    }
+  };
+
+  if (!isStandalone && !job) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -141,15 +176,22 @@ export default function CandidateList() {
               onClick={() => navigate('/')}
               className="text-teal-600 hover:text-teal-700 flex items-center gap-2"
             >
-              ← 求人一覧に戻る
+              ← {isStandalone ? 'メインメニューに戻る' : '求人一覧に戻る'}
             </button>
           </div>
           
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">候補者リスト</h1>
-            <div className="text-lg text-gray-700">
-              『{job.title}｜{job.startDate}〜{job.endDate}｜{job.salaryBand}』
-            </div>
+            {!isStandalone && job && (
+              <div className="text-lg text-gray-700">
+                『{job.title}｜{job.startDate}〜{job.endDate}｜{job.salaryBand}』
+              </div>
+            )}
+            {isStandalone && (
+              <div className="text-lg text-gray-700">
+                登録された全候補者の管理・閲覧ができます
+              </div>
+            )}
           </div>
         </div>
 
@@ -257,6 +299,9 @@ export default function CandidateList() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">地域</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最終更新</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  {isStandalone && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -285,6 +330,24 @@ export default function CandidateList() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
                       {maskUserId(worker.id)}
                     </td>
+                    {isStandalone && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(worker)}
+                            className="text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            編集
+                          </button>
+                          <button
+                            onClick={() => handleDelete(worker.id)}
+                            className="text-red-600 hover:text-red-800 font-medium"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -305,23 +368,25 @@ export default function CandidateList() {
         </div>
 
         {/* Fixed Footer */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              <span className="font-medium">{selectedWorkerIds.size}</span> 名を選択中
+        {!isStandalone && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">{selectedWorkerIds.size}</span> 名を選択中
+              </div>
+              <button
+                onClick={handleNext}
+                disabled={selectedWorkerIds.size === 0}
+                className="bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-8 rounded-lg transition-colors"
+              >
+                次へ
+              </button>
             </div>
-            <button
-              onClick={handleNext}
-              disabled={selectedWorkerIds.size === 0}
-              className="bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-8 rounded-lg transition-colors"
-            >
-              次へ
-            </button>
           </div>
-        </div>
+        )}
 
-        {/* Spacer for fixed footer */}
-        <div className="h-20"></div>
+        {/* Spacer for fixed footer only when needed */}
+        {!isStandalone && <div className="h-20"></div>}
       </div>
     </div>
   );
