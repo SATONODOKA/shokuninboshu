@@ -311,14 +311,6 @@ async function handleProfileCollection(userId: string, text: string) {
         // Send trade selection message
         await sendTradeSelectionMessage(userId);
         break;
-        
-      case 'location':
-        // Handle location input (fallback for text input)
-        profile.pref = text.trim();
-        
-        // Complete profile
-        await completeProfile(userId);
-        break;
     }
   } catch (error) {
     console.error('Error in profile collection:', error);
@@ -449,26 +441,23 @@ async function completeProfile(userId: string) {
   }
 }
 
-// Send trade selection message with quick reply
+// Send trade selection message with button template
 async function sendTradeSelectionMessage(userId: string) {
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
   
   try {
-    const quickReply = {
-      items: TRADES.map(trade => ({
-        type: 'action',
-        action: {
+    const message = {
+      type: 'template',
+      altText: '得意な工事の種類を選んでください',
+      template: {
+        type: 'buttons',
+        text: '得意な工事の種類を選んでください。',
+        actions: TRADES.map(trade => ({
           type: 'postback',
           label: trade,
           data: `trade_${trade}`
-        }
-      }))
-    };
-    
-    const message = {
-      type: 'text',
-      text: '得意な工事の種類を選んでください。',
-      quickReply
+        }))
+      }
     };
     
     await sendMessage(userId, [message]);
@@ -478,26 +467,23 @@ async function sendTradeSelectionMessage(userId: string) {
   }
 }
 
-// Send prefecture selection message with quick reply
+// Send prefecture selection message with button template
 async function sendPrefectureSelectionMessage(userId: string) {
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
   
   try {
-    const quickReply = {
-      items: PREFECTURES.map(pref => ({
-        type: 'action',
-        action: {
+    const message = {
+      type: 'template',
+      altText: 'お住まいの都道府県を選んでください',
+      template: {
+        type: 'buttons',
+        text: 'お住まいの都道府県を選んでください。',
+        actions: PREFECTURES.map(pref => ({
           type: 'postback',
           label: pref,
           data: `pref_${pref}`
-        }
-      }))
-    };
-    
-    const message = {
-      type: 'text',
-      text: 'お住まいの都道府県を選んでください。',
-      quickReply
+        }))
+      }
     };
     
     await sendMessage(userId, [message]);
@@ -507,7 +493,7 @@ async function sendPrefectureSelectionMessage(userId: string) {
   }
 }
 
-// Send city selection message with quick reply
+// Send city selection message with carousel template
 async function sendCitySelectionMessage(userId: string, prefecture: string) {
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
   
@@ -518,21 +504,28 @@ async function sendCitySelectionMessage(userId: string, prefecture: string) {
       return;
     }
     
-    const quickReply = {
-      items: cities.map(city => ({
-        type: 'action',
-        action: {
-          type: 'postback',
-          label: city,
-          data: `city_${city}`
-        }
+    // Split cities into groups of 2 for better layout (max 4 columns per carousel)
+    const cityGroups: string[][] = [];
+    for (let i = 0; i < cities.length; i += 2) {
+      cityGroups.push(cities.slice(i, i + 2));
+    }
+    
+    const columns = cityGroups.map(group => ({
+      text: group.join('\n'),
+      actions: group.map(city => ({
+        type: 'postback' as const,
+        label: city,
+        data: `city_${city}`
       }))
-    };
+    }));
     
     const message = {
-      type: 'text',
-      text: `${prefecture}の市区町村を選んでください。`,
-      quickReply
+      type: 'template',
+      altText: `${prefecture}の市区町村を選んでください`,
+      template: {
+        type: 'carousel',
+        columns: columns
+      }
     };
     
     await sendMessage(userId, [message]);
