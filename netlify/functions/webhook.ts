@@ -44,17 +44,14 @@ let db: any = null;
 // User profile collection states
 type ProfileStep = 'name' | 'trade' | 'location' | 'completed';
 
-// Available trades
+// Available trades (simplified to 3 main categories)
 const TRADES = [
-  '大工', '電気工事', '配管・水道', '左官', '塗装', 
-  '屋根工事', '建築板金', '内装', '外構・エクステリア', 'その他'
+  '大工', '左官', '電気工事'
 ];
 
-// Available prefectures (simplified list)
+// Available prefectures (simplified to 3 main areas)
 const PREFECTURES = [
-  '東京都', '神奈川県', '千葉県', '埼玉県', '茨城県', '栃木県', '群馬県',
-  '大阪府', '京都府', '兵庫県', '奈良県', '滋賀県', '和歌山県',
-  '愛知県', '静岡県', '岐阜県', '三重県', 'その他'
+  '東京都', '神奈川県', '埼玉県'
 ];
 
 // Store user profile collection state (in production, use Redis or similar)
@@ -235,7 +232,7 @@ async function sendWelcomeMessage(userId: string) {
       },
       {
         type: 'text',
-        text: 'まずはお名前（フルネーム）を教えてください。'
+        text: 'まずはお名前を教えてください。\n\n例：佐藤温\n（「です」「ます」は不要で、お名前のみをお答えください）'
       }
     ];
 
@@ -320,8 +317,13 @@ async function handleProfileCollection(userId: string, text: string) {
 
 // Handle trade selection from postback
 async function handleTradeSelection(userId: string, trade: string) {
+  console.log('handleTradeSelection called:', userId, trade);
+  
   const profile = userProfiles[userId];
-  if (!profile || profile.step !== 'trade') return;
+  if (!profile || profile.step !== 'trade') {
+    console.log('Invalid profile or step for trade selection:', profile?.step);
+    return;
+  }
   
   try {
     const firestore = initFirebase();
@@ -331,11 +333,15 @@ async function handleTradeSelection(userId: string, trade: string) {
     profile.trade = trade;
     profile.step = 'location';
     
+    console.log('Updated profile after trade selection:', profile);
+    
     // Update Firestore
     await updateDoc(workerRef, {
       trade: profile.trade,
       updatedAt: Timestamp.now()
     });
+    
+    console.log('Trade updated in Firestore, sending location selection...');
     
     // Send location selection message
     await sendLocationSelectionMessage(userId);
@@ -347,11 +353,17 @@ async function handleTradeSelection(userId: string, trade: string) {
 
 // Handle location selection from postback
 async function handleLocationSelection(userId: string, pref: string) {
+  console.log('handleLocationSelection called:', userId, pref);
+  
   const profile = userProfiles[userId];
-  if (!profile || profile.step !== 'location') return;
+  if (!profile || profile.step !== 'location') {
+    console.log('Invalid profile or step for location selection:', profile?.step);
+    return;
+  }
   
   try {
     profile.pref = pref;
+    console.log('Updated profile after location selection:', profile);
     
     // Complete profile
     await completeProfile(userId);
@@ -392,26 +404,52 @@ async function completeProfile(userId: string) {
   }
 }
 
-// Send trade selection message with quick reply
+// Send trade selection message with card template
 async function sendTradeSelectionMessage(userId: string) {
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
   
   try {
-    const quickReply = {
-      items: TRADES.map(trade => ({
-        type: 'action',
-        action: {
-          type: 'postback',
-          label: trade,
-          data: `trade_${trade}`
-        }
-      }))
-    };
-    
     const message = {
-      type: 'text',
-      text: '得意な工事の種類を選んでください。',
-      quickReply
+      type: 'template',
+      altText: '得意な工事の種類を選んでください',
+      template: {
+        type: 'carousel',
+        columns: [
+          {
+            text: '大工',
+            title: '大工',
+            actions: [
+              {
+                type: 'postback',
+                label: '大工を選択',
+                data: 'trade_大工'
+              }
+            ]
+          },
+          {
+            text: '左官',
+            title: '左官',
+            actions: [
+              {
+                type: 'postback',
+                label: '左官を選択', 
+                data: 'trade_左官'
+              }
+            ]
+          },
+          {
+            text: '電気工事',
+            title: '電気工事',
+            actions: [
+              {
+                type: 'postback',
+                label: '電気工事を選択',
+                data: 'trade_電気工事'
+              }
+            ]
+          }
+        ]
+      }
     };
     
     await sendMessage(userId, [message]);
