@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 開発中の暫定: 2025/01/01 まで許可（後続で安全化する）
+    function devUntil() { 
+      return request.time < timestamp.date(2025, 1, 1); 
+    }
+
+    match /{document=**} {
+      allow read, write: if devUntil();
+    }
+  }
+}
+
+// 本番用ルール例（後続マイルストーンで実装）
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+//     // 認証済みユーザーのみ読み取り可能
+//     match /workers/{lineUid} {
+//       allow read: if request.auth != null;
+//       allow write: if request.auth != null && request.auth.uid == lineUid;
+//     }
+    
+//     // 送信ログは認証済みユーザーのみ作成可能、読み取りは全員可能
+//     match /sendLogs/{logId} {
+//       allow read: if request.auth != null;
+//       allow create: if request.auth != null;
+//       allow update, delete: if false; // ログは変更・削除不可
+//     }
+    
+//     // 求人情報は管理者のみ作成・更新可能
+//     match /jobs/{jobId} {
+//       allow read: if true; // 公開情報
+//       allow write: if request.auth != null && request.auth.token.admin == true;
+//     }
+//   }
+// }

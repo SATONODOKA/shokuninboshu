@@ -19,6 +19,7 @@
   "dependencies": {
     "@netlify/functions": "^2.8.2",
     "@vitejs/plugin-react": "^5.0.0",
+    "firebase": "^12.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.2",
