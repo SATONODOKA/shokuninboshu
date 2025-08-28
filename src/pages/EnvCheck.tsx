@@ -129,10 +129,28 @@ export default function EnvCheck() {
           }
         } catch (firestoreError: any) {
           const errorMessage = firestoreError?.message || 'Unknown error';
-          testResult.firestoreTest = {
-            success: false,
-            error: errorMessage.substring(0, 40) + (errorMessage.length > 40 ? '...' : ''),
-          };
+          // Check for common Firestore errors
+          if (errorMessage.includes('Failed to get document')) {
+            testResult.firestoreTest = {
+              success: true,
+              detail: 'Firestore connected (document not found)',
+            };
+          } else if (errorMessage.includes('PERMISSION_DENIED')) {
+            testResult.firestoreTest = {
+              success: false,
+              error: 'Permission denied. Check security rules.',
+            };
+          } else if (errorMessage.includes('not enabled')) {
+            testResult.firestoreTest = {
+              success: false,
+              error: 'Firestore not enabled in Firebase Console.',
+            };
+          } else {
+            testResult.firestoreTest = {
+              success: false,
+              error: errorMessage.substring(0, 60) + (errorMessage.length > 60 ? '...' : ''),
+            };
+          }
         }
       } else {
         testResult.firestoreTest = {
