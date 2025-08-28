@@ -11,7 +11,8 @@ export function buildJobFlex(job: {
         type: 'box', layout: 'vertical', spacing: 'md',
         contents: [
           { type:'text', text:`【${job.trade}】${job.sitePref}${job.siteCity}`, weight:'bold', size:'md' },
-          { type:'text', text:`${job.startDate}〜${job.endDate}｜${job.salaryBand}`, size:'sm', color:'#6B7280' },
+          { type:'text', text:`期間: ${job.startDate}〜${job.endDate}`, size:'sm', color:'#6B7280' },
+          { type:'text', text:`日当: ${job.salaryBand}`, size:'sm', color:'#6B7280' },
           ...(job.summary ? [{ type:'text', text: job.summary, wrap:true, size:'sm' }] : []),
           { type:'separator', margin:'md' },
           { type:'box', layout:'horizontal', spacing:'sm', contents:[

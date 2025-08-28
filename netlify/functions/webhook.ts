@@ -449,52 +449,26 @@ async function completeProfile(userId: string) {
   }
 }
 
-// Send trade selection message with card template
+// Send trade selection message with quick reply
 async function sendTradeSelectionMessage(userId: string) {
   if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) return;
   
   try {
+    const quickReply = {
+      items: TRADES.map(trade => ({
+        type: 'action',
+        action: {
+          type: 'postback',
+          label: trade,
+          data: `trade_${trade}`
+        }
+      }))
+    };
+    
     const message = {
-      type: 'template',
-      altText: '得意な工事の種類を選んでください',
-      template: {
-        type: 'carousel',
-        columns: [
-          {
-            text: '大工',
-            title: '大工',
-            actions: [
-              {
-                type: 'postback',
-                label: '大工を選択',
-                data: 'trade_大工'
-              }
-            ]
-          },
-          {
-            text: '左官',
-            title: '左官',
-            actions: [
-              {
-                type: 'postback',
-                label: '左官を選択', 
-                data: 'trade_左官'
-              }
-            ]
-          },
-          {
-            text: '電気',
-            title: '電気',
-            actions: [
-              {
-                type: 'postback',
-                label: '電気を選択',
-                data: 'trade_電気'
-              }
-            ]
-          }
-        ]
-      }
+      type: 'text',
+      text: '得意な工事の種類を選んでください。',
+      quickReply
     };
     
     await sendMessage(userId, [message]);
