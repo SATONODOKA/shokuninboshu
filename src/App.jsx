@@ -6,6 +6,7 @@ import CandidateList from './pages/CandidateList';
 import MessageCompose from './pages/MessageCompose';
 import LineSend from './pages/LineSend';
 import EnvCheck from './pages/EnvCheck';
+import FirestoreTest from './pages/FirestoreTest';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/recruit/compose" element={<MessageCompose />} />
         <Route path="/line/send" element={<LineSend />} />
         <Route path="/env-check" element={<EnvCheck />} />
+        <Route path="/firestore-test" element={<FirestoreTest />} />
       </Routes>
     </Router>
   );
