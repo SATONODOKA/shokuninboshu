@@ -11,11 +11,11 @@ export function buildJobFlex(job: {
         type: 'box', layout: 'vertical', spacing: 'md',
         contents: [
           { type:'text', text:`【${job.trade}】${job.sitePref}${job.siteCity}`, weight:'bold', size:'md' },
-          { type:'text', text:`期間: ${job.startDate}〜${job.endDate}`, size:'sm', color:'#6B7280' },
-          { type:'text', text:`日当: ${job.salaryBand}`, size:'sm', color:'#6B7280' },
+          { type:'text', text:`${job.startDate}〜${job.endDate}`, size:'sm', color:'#6B7280' },
+          { type:'text', text:`${job.salaryBand}`, size:'sm', color:'#6B7280' },
           { 
             type:'text', 
-            text:`📍 現在地から12.5km・車で約25分（推定）`, 
+            text:`📍 現在地から12.5km・車で約25分`, 
             size:'sm', 
             color:'#059669' 
           },
