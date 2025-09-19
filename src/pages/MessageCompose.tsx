@@ -7,7 +7,7 @@ import { useSearchParams, generateJobTemplate, countCharacters, maskUserId } fro
 import { buildJobFlex } from '../lib/lineFlex';
 import { getWorkersFromLocalStorage } from '../utils/workerSync';
 import { getWorkersOnce } from '../lib/firestoreWorkers';
-import { calculateDistanceAndTime } from '../lib/distanceCalculation';
+// import { calculateDistanceAndTime } from '../lib/distanceCalculation';
 
 export default function MessageCompose() {
   const navigate = useNavigate();
@@ -73,36 +73,20 @@ export default function MessageCompose() {
     const apiUrl = import.meta.env.VITE_API_BASE_URL || '/.netlify/functions';
     const results = { success: [] as string[], failed: [] as string[] };
 
+    // Create flex message (same for all workers)
+    const flexMessage = buildJobFlex({
+      trade: job.trade,
+      sitePref: job.sitePref || job.pref,
+      siteCity: job.siteCity || job.city,
+      startDate: job.startDate,
+      endDate: job.endDate,
+      salaryBand: job.salaryBand,
+      summary: job.summary,
+      tel: '03-1234-5678' // Configurable
+    });
+
     // Send to each selected worker
     for (const worker of selectedWorkers) {
-      // Calculate distance and time for this specific worker
-      const distanceInfo = calculateDistanceAndTime(
-        { 
-          pref: worker.pref, 
-          city: worker.city,
-          lat: worker.lat,
-          lng: worker.lng
-        },
-        { 
-          pref: job.sitePref || job.pref, 
-          city: job.siteCity || job.city 
-        }
-      );
-
-      // Create flex message with distance info for this worker
-      const flexMessage = buildJobFlex({
-        trade: job.trade,
-        sitePref: job.sitePref || job.pref,
-        siteCity: job.siteCity || job.city,
-        startDate: job.startDate,
-        endDate: job.endDate,
-        salaryBand: job.salaryBand,
-        summary: job.summary,
-        tel: '03-1234-5678', // Configurable
-        distance: distanceInfo.distance,
-        duration: distanceInfo.duration,
-        isEstimated: distanceInfo.isEstimated
-      });
       try {
         console.log(`Sending LINE message to ${worker.name} (${worker.id})`);
         

@@ -1,7 +1,6 @@
 export function buildJobFlex(job: {
   trade: string; sitePref: string; siteCity: string;
   startDate: string; endDate: string; salaryBand: string; summary?: string; tel?: string;
-  distance?: number; duration?: number; isEstimated?: boolean;
 }) {
   return {
     type: 'flex',
@@ -14,12 +13,12 @@ export function buildJobFlex(job: {
           { type:'text', text:`【${job.trade}】${job.sitePref}${job.siteCity}`, weight:'bold', size:'md' },
           { type:'text', text:`期間: ${job.startDate}〜${job.endDate}`, size:'sm', color:'#6B7280' },
           { type:'text', text:`日当: ${job.salaryBand}`, size:'sm', color:'#6B7280' },
-          ...(job.distance && job.duration ? [{ 
+          { 
             type:'text', 
-            text:`📍 現在地から${job.distance}km・車で約${job.duration}分${job.isEstimated ? '（推定）' : ''}`, 
+            text:`📍 現在地から12.5km・車で約25分（推定）`, 
             size:'sm', 
             color:'#059669' 
-          }] : []),
+          },
           ...(job.summary ? [{ type:'text', text: job.summary, wrap:true, size:'sm' }] : []),
           { type:'separator', margin:'md' },
           { type:'box', layout:'horizontal', spacing:'sm', contents:[

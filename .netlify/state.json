@@ -1,7 +1,7 @@
 {
 	"geolocation": {
 		"data": {
-			"city": "Nakano City",
+			"city": "Tokyo",
 			"country": {
 				"code": "JP",
 				"name": "Japan"
@@ -11,11 +11,11 @@
 				"name": "Tokyo"
 			},
 			"timezone": "Asia/Tokyo",
-			"latitude": 35.7027,
-			"longitude": 139.6749,
-			"postalCode": "164-0011"
+			"latitude": 35.6837,
+			"longitude": 139.6805,
+			"postalCode": "151-0071"
 		},
-		"timestamp": 1756289421398
+		"timestamp": 1758242172165
 	},
 	"siteId": "98c5c546-47ad-4df1-bc9a-7b679da24ec7"
 }
